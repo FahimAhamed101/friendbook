@@ -1,0 +1,48 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext {
+        kotlin_version = '1.6.10'
+        ext.vesdk_version = '8.3.0'
+    }
+    repositories {
+        google()
+        maven { url "https://jcenter.bintray.com/" }
+        maven { url "https://www.jitpack.io" }
+        maven { url 'https://artifactory.img.ly/artifactory/imgly' }
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:7.0.4"
+        //noinspection GradleDependency
+        classpath 'com.google.gms:google-services:4.3.15'
+        //noinspection DifferentKotlinGradleVersion
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "ly.img.android.pesdk:plugin:$vesdk_version"
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        maven { url "https://jitpack.io" }
+        mavenCentral()
+        maven { url "https://maven.aliyun.com/repository/jcenter" }
+        maven { url "https://artifactory.appodeal.com/appodeal-public" }
+        maven { url "https://repository.liferay.com/nexus/content/repositories/gradle-plugins" }
+        maven { url "https://jcenter.bintray.com/" }
+        maven {
+            url "https://github.com/jitsi/jitsi-maven-repository/raw/master/releases"
+        }
+        maven { url "https://artifactory.img.ly/artifactory/imgly" }
+    }
+    project.configurations.all {
+        resolutionStrategy {
+            force 'androidx.work:work-runtime:2.7.0'
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

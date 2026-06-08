@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ds">
+        <attr name="backgroundcolor" format="color"/>
+        <attr name="layoutcolor" format="color"/>
+        <attr name="textcolor" format="color"/>
+        <attr name="texttwocolor" format="color"/>
+        <attr name="selectedcolor" format="color" />
+        <attr name="defaultcolor" format="color" />
+        <attr name="menucolor" format="color" />
+    </declare-styleable>
+    <declare-styleable name="VoicePlayerView">
+        <attr name="enableVisualizer" format="boolean" />
+        <attr name="visualizationPlayedColor" format="color" />
+        <attr name="visualizationNotPlayedColor" format="color" />
+        <attr name="playPauseBackgroundColor" format="color" />
+        <attr name="timingBackgroundColor" format="color" />
+        <attr name="seekBarProgressColor" format="color" />
+        <attr name="showShareButton" format="boolean" />
+        <attr name="shareCornerRadius" format="dimension|float" />
+        <attr name="playPauseCornerRadius" format="dimension|float" />
+        <attr name="showTiming" format="boolean" />
+        <attr name="viewCornerRadius" format="dimension|float" />
+        <attr name="viewBackground" format="color" />
+        <attr name="progressTimeColor" format="color" />
+        <attr name="seekBarThumbColor" format="color" />
+        <attr name="shareBackgroundColor" format="color" />
+        <attr name="playProgressbarColor" format="color" />
+        <attr name="shareText" format="string" />
+    </declare-styleable>
+</resources>

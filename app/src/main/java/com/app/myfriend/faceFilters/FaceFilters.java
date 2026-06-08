@@ -1,0 +1,622 @@
+package com.app.myfriend.faceFilters;
+
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.media.Image;
+import android.media.MediaScannerConnection;
+import android.os.Bundle;
+import android.os.Environment;
+import android.text.format.DateFormat;
+import android.util.DisplayMetrics;
+import android.util.Size;
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageProxy;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
+
+import com.google.android.material.snackbar.Snackbar;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.iammert.library.cameravideobuttonlib.CameraVideoButton;
+import com.app.myfriend.MainActivity;
+import com.app.myfriend.R;
+import com.app.myfriend.send.MediaSelectActivity;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.concurrent.ExecutionException;
+
+import ai.deepar.ar.ARErrorType;
+import ai.deepar.ar.AREventListener;
+import ai.deepar.ar.CameraResolutionPreset;
+import ai.deepar.ar.DeepAR;
+import ai.deepar.ar.DeepARImageFormat;
+
+
+
+@SuppressWarnings("ALL")
+public class FaceFilters extends AppCompatActivity implements SurfaceHolder.Callback, AREventListener {
+
+    // Default camera lens value, change to CameraSelector.LENS_FACING_BACK to initialize with back camera
+    private int defaultLensFacing = CameraSelector.LENS_FACING_FRONT;
+    private ARSurfaceProvider surfaceProvider = null;
+
+    private int lensFacing = defaultLensFacing;
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private ByteBuffer[] buffers;
+
+    private int currentBuffer = 0;
+    private boolean buffersInitialized = false;
+    private static final int NUMBER_OF_BUFFERS=2;
+    private static final boolean useExternalCameraTexture = true;
+
+    private DeepAR deepAR;
+
+    private int currentMask=0;
+    private int currentEffect=0;
+    private int currentFilter=0;
+
+    private int screenOrientation;
+
+    ArrayList<String> effects;
+
+    String pathVideo = "";
+    private FlashlightController flashlightController;
+    private boolean isFlashOn = false;
+
+    private boolean recording = false;
+    private boolean currentSwitchRecording = false;
+
+    private int width = 0;
+    private int height = 0;
+
+    private File videoFileName;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_face);
+        flashlightController = new FlashlightController(this);
+    }
+
+    @Override
+    protected void onStart() {
+        initialize();
+        super.onStart();
+    }
+
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(FaceFilters.this, MainActivity.class));
+        super.onBackPressed();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,  String[] permissions, int[] grantResults) {
+        if (requestCode == 1 && grantResults.length > 0) {
+            for (int grantResult : grantResults) {
+                if (grantResult != PackageManager.PERMISSION_GRANTED) {
+                    return; // no permission
+                }
+            }
+            initialize();
+        }
+    }
+
+    private void initialize() {
+        initializeDeepAR();
+        initializeFilters();
+        initalizeViews();
+    }
+
+    private void initializeFilters() {
+        effects = new ArrayList<>();
+        effects.add("none");
+        effects.add("viking_helmet.deepar");
+        effects.add("MakeupLook.deepar");
+        effects.add("Split_View_Look.deepar");
+        effects.add("Emotions_Exaggerator.deepar");
+        effects.add("Emotion_Meter.deepar");
+        effects.add("Stallone.deepar");
+        effects.add("flower_face.deepar");
+        effects.add("galaxy_background.deepar");
+        effects.add("Humanoid.deepar");
+        effects.add("Neon_Devil_Horns.deepar");
+        effects.add("Ping_Pong.deepar");
+        effects.add("Pixel_Hearts.deepar");
+        effects.add("Snail.deepar");
+        effects.add("Hope.deepar");
+        effects.add("Vendetta_Mask.deepar");
+        effects.add("Fire_Effect.deepar");
+        effects.add("burning_effect.deepar");
+        effects.add("Elephant_Trunk.deepar");
+
+    }
+
+    private void initalizeViews() {
+        ImageButton previousMask = findViewById(R.id.previousMask);
+        ImageButton nextMask = findViewById(R.id.nextMask);
+        ImageButton flash = findViewById(R.id.flash);
+        SurfaceView arView = findViewById(R.id.surface);
+
+        arView.getHolder().addCallback(this);
+
+        // Surface might already be initialized, so we force the call to onSurfaceChanged
+        arView.setVisibility(View.GONE);
+        arView.setVisibility(View.VISIBLE);
+
+        findViewById(R.id.mGallery).setOnClickListener(v -> {
+            Intent intent = new Intent(FaceFilters.this, MediaSelectActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        });
+
+
+        CameraVideoButton screenshotBtn = findViewById(R.id.recordButton);
+
+        screenshotBtn.setVideoDuration(30000);
+        screenshotBtn.enableVideoRecording(true);
+        screenshotBtn.enablePhotoTaking(true);
+
+        screenshotBtn.setActionListener(new CameraVideoButton.ActionListener() {
+            @Override
+            public void onStartRecord() {
+                String time = ""+System.currentTimeMillis();
+                deepAR.startVideoRecording(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + time + ".mp4");
+                pathVideo = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + time + ".mp4";
+            }
+
+            @Override
+            public void onEndRecord() {
+                deepAR.stopVideoRecording();
+            }
+
+            @Override
+            public void onDurationTooShortError() {
+                deepAR.stopVideoRecording();
+            }
+
+            @Override
+            public void onSingleTap() {
+                deepAR.takeScreenshot();
+            }
+        });
+
+        flash.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isFlashOn){
+                    turnOffFlash();
+                }else {
+                    turnOnFlash();
+                }
+            }
+        });
+
+        findViewById(R.id.stopButton).setOnClickListener(v -> {
+            deepAR.stopVideoRecording();
+            findViewById(R.id.recordButton).setVisibility(View.VISIBLE);
+            findViewById(R.id.stopButton).setVisibility(View.GONE);
+        });
+
+        ImageButton switchCamera = findViewById(R.id.switchCamera);
+        switchCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                lensFacing = lensFacing ==  CameraSelector.LENS_FACING_FRONT ?  CameraSelector.LENS_FACING_BACK :  CameraSelector.LENS_FACING_FRONT ;
+                //unbind immediately to avoid mirrored frame.
+                ProcessCameraProvider cameraProvider = null;
+                try {
+                    cameraProvider = cameraProviderFuture.get();
+                    cameraProvider.unbindAll();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                setupCamera();
+            }
+        });
+
+        previousMask.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gotoPrevious();
+            }
+        });
+
+        nextMask.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gotoNext();
+            }
+        });
+
+    }
+    /*
+            get interface orientation from
+            https://stackoverflow.com/questions/10380989/how-do-i-get-the-current-orientation-activityinfo-screen-orientation-of-an-a/10383164
+         */
+    private int getScreenOrientation() {
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        width = dm.widthPixels;
+        height = dm.heightPixels;
+        int orientation;
+        // if the device's natural orientation is portrait:
+        if ((rotation == Surface.ROTATION_0
+                || rotation == Surface.ROTATION_180) && height > width ||
+                (rotation == Surface.ROTATION_90
+                        || rotation == Surface.ROTATION_270) && width > height) {
+            switch(rotation) {
+                case Surface.ROTATION_0:
+                    orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                    break;
+                case Surface.ROTATION_90:
+                    orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                    break;
+                case Surface.ROTATION_180:
+                    orientation =
+                            ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+                    break;
+                case Surface.ROTATION_270:
+                    orientation =
+                            ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                    break;
+                default:
+                    orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                    break;
+            }
+        }
+        // if the device's natural orientation is landscape or if the device
+        // is square:
+        else {
+            switch(rotation) {
+                case Surface.ROTATION_0:
+                    orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                    break;
+                case Surface.ROTATION_90:
+                    orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                    break;
+                case Surface.ROTATION_180:
+                    orientation =
+                            ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                    break;
+                case Surface.ROTATION_270:
+                    orientation =
+                            ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+                    break;
+                default:
+                    orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                    break;
+            }
+        }
+
+        return orientation;
+    }
+
+    private void turnOnFlash() {
+        if (!isFlashOn){
+            flashlightController.turnOnFlashlight();
+        }
+    }
+
+    private void turnOffFlash() {
+        if (isFlashOn){
+            flashlightController.turnOffFlashlight();
+
+        }
+    }
+
+
+    private void initializeDeepAR() {
+        deepAR = new DeepAR(this);
+        deepAR.setLicenseKey("23810a50c15ba47473ef08f886ae8c373a8d1f70f4a2096e4138e7e0b73a5c3e67e4dd902dc3fb83");
+        deepAR.initialize(this, this);
+        setupCamera();
+    }
+
+    private void setupCamera() {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                    bindImageAnalysis(cameraProvider);
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void bindImageAnalysis(@NonNull ProcessCameraProvider cameraProvider) {
+        CameraResolutionPreset cameraResolutionPreset = CameraResolutionPreset.P1920x1080;
+        int width;
+        int height;
+        int orientation = getScreenOrientation();
+        if (orientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE || orientation ==ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE){
+            width = cameraResolutionPreset.getWidth();
+            height =  cameraResolutionPreset.getHeight();
+        } else {
+            width = cameraResolutionPreset.getHeight();
+            height = cameraResolutionPreset.getWidth();
+        }
+
+        Size cameraResolution = new Size(width, height);
+        CameraSelector cameraSelector = new CameraSelector.Builder().requireLensFacing(lensFacing).build();
+
+        if(useExternalCameraTexture) {
+            Preview preview = new Preview.Builder()
+                    .setTargetResolution(cameraResolution)
+                    .build();
+
+            cameraProvider.unbindAll();
+            cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, preview);
+            if(surfaceProvider == null) {
+                surfaceProvider = new ARSurfaceProvider(this, deepAR);
+            }
+            preview.setSurfaceProvider(surfaceProvider);
+            surfaceProvider.setMirror(lensFacing == CameraSelector.LENS_FACING_FRONT);
+        } else {
+            ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                    .setTargetResolution(cameraResolution)
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build();
+            imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), imageAnalyzer);
+            buffersInitialized = false;
+            cameraProvider.unbindAll();
+            cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, imageAnalysis);
+        }
+    }
+
+    private void initializeBuffers(int size) {
+        this.buffers = new ByteBuffer[NUMBER_OF_BUFFERS];
+        for (int i = 0; i < NUMBER_OF_BUFFERS; i++) {
+            this.buffers[i] = ByteBuffer.allocateDirect(size);
+            this.buffers[i].order(ByteOrder.nativeOrder());
+            this.buffers[i].position(0);
+        }
+    }
+
+    private ImageAnalysis.Analyzer imageAnalyzer = new ImageAnalysis.Analyzer() {
+        @Override
+        public void analyze(@NonNull ImageProxy image) {
+            ByteBuffer yBuffer = image.getPlanes()[0].getBuffer();
+            ByteBuffer uBuffer = image.getPlanes()[1].getBuffer();
+            ByteBuffer vBuffer = image.getPlanes()[2].getBuffer();
+
+            int ySize = yBuffer.remaining();
+            int uSize = uBuffer.remaining();
+            int vSize = vBuffer.remaining();
+
+            if(!buffersInitialized) {
+                buffersInitialized = true;
+                initializeBuffers(ySize + uSize + vSize);
+            }
+
+            byte[] byteData = new byte[ySize + uSize + vSize];
+
+            int width = image.getWidth();
+            int yStride = image.getPlanes()[0].getRowStride();
+            int uStride = image.getPlanes()[1].getRowStride();
+            int vStride = image.getPlanes()[2].getRowStride();
+            int outputOffset = 0;
+            if (width == yStride) {
+                yBuffer.get(byteData, outputOffset, ySize);
+                outputOffset += ySize;
+            } else {
+                for (int inputOffset = 0; inputOffset < ySize; inputOffset += yStride) {
+                    yBuffer.position(inputOffset);
+                    yBuffer.get(byteData, outputOffset, Math.min(yBuffer.remaining(), width));
+                    outputOffset += width;
+                }
+            }
+            //U and V are swapped
+            if (width == vStride) {
+                vBuffer.get(byteData, outputOffset, vSize);
+                outputOffset += vSize;
+            } else {
+                for (int inputOffset = 0; inputOffset < vSize; inputOffset += vStride) {
+                    vBuffer.position(inputOffset);
+                    vBuffer.get(byteData, outputOffset, Math.min(vBuffer.remaining(), width));
+                    outputOffset += width;
+                }
+            }
+            if (width == uStride) {
+                uBuffer.get(byteData, outputOffset, uSize);
+                outputOffset += uSize;
+            } else {
+                for (int inputOffset = 0; inputOffset < uSize; inputOffset += uStride) {
+                    uBuffer.position(inputOffset);
+                    uBuffer.get(byteData, outputOffset, Math.min(uBuffer.remaining(), width));
+                    outputOffset += width;
+                }
+            }
+
+            buffers[currentBuffer].put(byteData);
+            buffers[currentBuffer].position(0);
+            if (deepAR != null) {
+                deepAR.receiveFrame(buffers[currentBuffer],
+                        image.getWidth(), image.getHeight(),
+                        image.getImageInfo().getRotationDegrees(),
+                        lensFacing == CameraSelector.LENS_FACING_FRONT,
+                        DeepARImageFormat.YUV_420_888,
+                        image.getPlanes()[1].getPixelStride()
+                );
+            }
+            currentBuffer = (currentBuffer + 1) % NUMBER_OF_BUFFERS;
+            image.close();
+        }
+    };
+
+
+    private String getFilterPath(String filterName) {
+        if (filterName.equals("none")) {
+            return null;
+        }
+        return "file:///android_asset/" + filterName;
+    }
+
+    private void gotoNext() {
+        currentEffect = (currentEffect + 1) % effects.size();
+        deepAR.switchEffect("effect", getFilterPath(effects.get(currentEffect)));
+    }
+
+    private void gotoPrevious() {
+        currentEffect = (currentEffect - 1 + effects.size()) % effects.size();
+        deepAR.switchEffect("effect", getFilterPath(effects.get(currentEffect)));
+    }
+
+    @Override
+    protected void onStop() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED  ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.CAMERA, Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.RECORD_AUDIO },
+                    1);
+        } else {
+            // Permission has already been granted
+            initialize();
+        }
+        super.onStart();
+    }
+
+    protected void onDestroy() {
+        super.onDestroy();
+        if(surfaceProvider != null) {
+            surfaceProvider.stop();
+        }
+        if (deepAR == null) {
+            return;
+        }
+        deepAR.setAREventListener(null);
+        deepAR.release();
+        deepAR = null;
+    }
+
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        // If we are using on screen rendering we have to set surface view where DeepAR will render
+        deepAR.setRenderSurface(holder.getSurface(), width, height);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        if (deepAR != null) {
+            deepAR.setRenderSurface(null, 0, 0);
+        }
+    }
+
+    @Override
+    public void screenshotTaken(Bitmap bitmap) {
+        CharSequence now = DateFormat.format("yyyy_MM_dd_hh_mm_ss", new Date());
+        try {
+            File imageFile = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "image_" + now + ".jpg");
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            int quality = 100;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            MediaScannerConnection.scanFile(FaceFilters.this, new String[]{imageFile.toString()}, null, null);
+            Toast.makeText(FaceFilters.this, "Screenshot " + imageFile.getName() + " saved.", Toast.LENGTH_SHORT).show();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void videoRecordingStarted() {
+
+    }
+
+    @Override
+    public void videoRecordingFinished() {
+        Snackbar.make(findViewById(R.id.main), "Saved", Snackbar.LENGTH_SHORT).show();
+        MediaScannerConnection.scanFile(FaceFilters.this, new String[]{pathVideo.toString()}, null, null);
+        pathVideo = "";
+    }
+
+    @Override
+    public void videoRecordingFailed() {
+        Snackbar.make(findViewById(R.id.main), "Failed to save", Snackbar.LENGTH_SHORT).show();
+        pathVideo = "";
+    }
+
+    @Override
+    public void videoRecordingPrepared() {
+
+    }
+
+    @Override
+    public void shutdownFinished() {
+
+    }
+
+    @Override
+    public void initialized() {
+        // Restore effect state after deepar release
+        deepAR.switchEffect("effect", getFilterPath(effects.get(currentEffect)));
+    }
+
+    @Override
+    public void faceVisibilityChanged(boolean b) {
+
+    }
+
+    @Override
+    public void imageVisibilityChanged(String s, boolean b) {
+
+    }
+
+    @Override
+    public void frameAvailable(Image image) {
+
+    }
+
+    @Override
+    public void error(ARErrorType arErrorType, String s) {
+
+    }
+
+
+    @Override
+    public void effectSwitched(String s) {
+
+    }
+
+
+}

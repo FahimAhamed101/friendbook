@@ -102,6 +102,15 @@ android {
         versionCode 5
         versionName "5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Read Mapbox token from local.properties
+        def mapboxToken = ""
+        if (project.rootProject.file('local.properties').exists()) {
+            def props = new Properties()
+            props.load(new FileInputStream(project.rootProject.file('local.properties')))
+            mapboxToken = props.getProperty('MAPBOX_ACCESS_TOKEN', '')
+        }
+        buildConfigField 'String', 'MAPBOX_ACCESS_TOKEN', "\"${mapboxToken}\""
     }
 
     buildTypes {

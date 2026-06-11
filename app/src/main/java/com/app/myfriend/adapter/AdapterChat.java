@@ -213,7 +213,7 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder>{
                         double latitude = Double.parseDouble(snapshot.child("latitude").getValue().toString());
 
                         MapboxStaticMap staticImage = MapboxStaticMap.builder()
-                                .accessToken("MAPBOX_TOKEN_REDACTED")
+                                .accessToken(BuildConfig.MAPBOX_ACCESS_TOKEN)
                                 .styleId(StaticMapCriteria.DARK_STYLE)
                                 .cameraPoint(Point.fromLngLat(longitude, latitude))
                                 .cameraZoom(13)

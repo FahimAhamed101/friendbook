@@ -198,7 +198,7 @@ public class CreatePostPagesActivity extends AppCompatActivity implements Privac
         //Location
         findViewById(R.id.add_location).setOnClickListener(v -> {
             Intent intent = new PlaceAutocomplete.IntentBuilder()
-                    .accessToken("MAPBOX_TOKEN_REDACTED")
+                    .accessToken(BuildConfig.MAPBOX_ACCESS_TOKEN)
                     .placeOptions(PlaceOptions.builder()
                             .backgroundColor(Color.parseColor("#ffffff"))
                             .build(PlaceOptions.MODE_CARDS))

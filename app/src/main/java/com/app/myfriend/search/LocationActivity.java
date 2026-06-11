@@ -61,7 +61,7 @@ public class LocationActivity extends AppCompatActivity {
         location = findViewById(R.id.location);
         findViewById(R.id.editText).setOnClickListener(v -> {
             Intent intent = new PlaceAutocomplete.IntentBuilder()
-                    .accessToken("MAPBOX_TOKEN_REDACTED")
+                    .accessToken(BuildConfig.MAPBOX_ACCESS_TOKEN)
                     .placeOptions(PlaceOptions.builder()
                             .backgroundColor(Color.parseColor("#ffffff"))
                             .build(PlaceOptions.MODE_CARDS))

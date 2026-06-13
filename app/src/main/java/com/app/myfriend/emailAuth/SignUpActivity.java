@@ -6,38 +6,31 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-import com.app.myfriend.MainActivity;
 import com.app.myfriend.R;
+import com.app.myfriend.backend.BackendAuthApi;
+import com.app.myfriend.backend.BackendHomeActivity;
+import com.app.myfriend.backend.BackendSessionManager;
 import com.app.myfriend.menu.PrivacyActivity;
 import com.app.myfriend.menu.TermsActivity;
 
-import java.util.HashMap;
-import java.util.Objects;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @SuppressWarnings("ALL")
 public class SignUpActivity extends AppCompatActivity {
 
-    FirebaseAuth mAuth;
+    private BackendSessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
-        //Firebase
-        mAuth = FirebaseAuth.getInstance();
+        sessionManager = new BackendSessionManager(this);
 
         //Back
         findViewById(R.id.imageView).setOnClickListener(v -> onBackPressed());
@@ -88,111 +81,7 @@ public class SignUpActivity extends AppCompatActivity {
                 Snackbar.make(v,"Password should have minimum 6 characters", Snackbar.LENGTH_LONG).show();
                 findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
             }else {
-                if (code.getText().toString().trim().isEmpty()){
-                    Query emailQuery = FirebaseDatabase.getInstance().getReference().child("Users").orderByChild("email").equalTo(mEmail);
-                    emailQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getChildrenCount()>0){
-                                Snackbar.make(v,"Email already exist, try with new one", Snackbar.LENGTH_LONG).show();
-                                findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
-                            }else {
-                                Query usernameQuery = FirebaseDatabase.getInstance().getReference().child("Users").orderByChild("username").equalTo(mUsername);
-                                usernameQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        if (snapshot.getChildrenCount()>0){
-                                            Snackbar.make(v,"Username already exist, try with new one", Snackbar.LENGTH_LONG).show();
-                                            findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
-                                        }else {
-                                            register(mEmail,mPassword,mName,mUsername);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-                                        Snackbar.make(v,error.getMessage(), Snackbar.LENGTH_LONG).show();
-                                    }
-                                });
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            Snackbar.make(v,error.getMessage(), Snackbar.LENGTH_LONG).show();
-                        }
-                    });
-                }else {
-                    FirebaseDatabase.getInstance().getReference().child("Code").child(code.getText().toString().trim()).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.exists()){
-
-                                String hisId = dataSnapshot.child("user").getValue().toString();
-
-                                FirebaseDatabase.getInstance().getReference().child("Balance").child(hisId).addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        double add = Double.parseDouble(Objects.requireNonNull(snapshot.child("balance").getValue()).toString()) + 0.01;
-                                        HashMap<String, Object> hashMap = new HashMap<>();
-                                        hashMap.put("balance", String.valueOf(add));
-                                        FirebaseDatabase.getInstance().getReference().child("Balance").child(hisId).updateChildren(hashMap);
-                                        FirebaseDatabase.getInstance().getReference("Code").child(code.getText().toString().trim()).getRef().removeValue();
-                                    }
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-
-                                    }
-                                });
-
-
-                                Query emailQuery = FirebaseDatabase.getInstance().getReference().child("Users").orderByChild("email").equalTo(mEmail);
-                                emailQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        if (snapshot.getChildrenCount()>0){
-                                            Snackbar.make(v,"Email already exist, try with new one", Snackbar.LENGTH_LONG).show();
-                                            findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
-                                        }else {
-                                            Query usernameQuery = FirebaseDatabase.getInstance().getReference().child("Users").orderByChild("username").equalTo(mUsername);
-                                            usernameQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-                                                @Override
-                                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                                    if (snapshot.getChildrenCount()>0){
-                                                        Snackbar.make(v,"Username already exist, try with new one", Snackbar.LENGTH_LONG).show();
-                                                        findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
-                                                    }else {
-                                                        register(mEmail,mPassword,mName,mUsername);
-                                                    }
-                                                }
-
-                                                @Override
-                                                public void onCancelled(@NonNull DatabaseError error) {
-                                                    Snackbar.make(v,error.getMessage(), Snackbar.LENGTH_LONG).show();
-                                                }
-                                            });
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-                                        Snackbar.make(v,error.getMessage(), Snackbar.LENGTH_LONG).show();
-                                    }
-                                });
-
-                            }else {
-                                Toast.makeText(SignUpActivity.this, "Your Referral Code has expired or doesn't exist", Toast.LENGTH_LONG).show();
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
-                }
-
+                register(mEmail,mPassword,mName,mUsername);
             }
 
         });
@@ -200,39 +89,53 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void register(String mEmail, String mPassword, String mName, String mUsername) {
+        String[] parts = mName.trim().split("\\s+", 2);
+        String firstName = parts.length > 0 ? parts[0].trim() : "";
+        String lastName = parts.length > 1 ? parts[1].trim() : "";
 
-        mAuth.createUserWithEmailAndPassword(mEmail, mPassword).addOnCompleteListener(task -> {
-            if (task.isSuccessful()){
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("name", mName);
+            payload.put("firstName", firstName);
+            if (!lastName.isEmpty()) {
+                payload.put("lastName", lastName);
+            }
+            payload.put("email", mEmail);
+            payload.put("password", mPassword);
+            payload.put("username", mUsername);
+            payload.put("termsAccepted", true);
+        } catch (JSONException e) {
+            findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+            Snackbar.make(findViewById(R.id.signUp), "Could not prepare signup request.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
 
-                String userId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-
-                HashMap<String, Object> hashMap = new HashMap<>();
-                hashMap.put("id", userId);
-                hashMap.put("name", mName);
-                hashMap.put("email", mEmail);
-                hashMap.put("username", mUsername);
-                hashMap.put("bio", "");
-                hashMap.put("verified","");
-                hashMap.put("location","");
-                hashMap.put("phone","");
-                hashMap.put("status",""+System.currentTimeMillis());
-                hashMap.put("typingTo","noOne");
-                hashMap.put("link","");
-                hashMap.put("photo", "");
-                FirebaseDatabase.getInstance().getReference("Users").child(userId).setValue(hashMap).addOnCompleteListener(task1 -> {
-                    if (task1.isSuccessful()){
-                        Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK| Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                        finish();
-                        findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+        BackendAuthApi.signup(payload, new BackendAuthApi.AuthCallback() {
+            @Override
+            public void onSuccess(JSONObject responseJson) {
+                runOnUiThread(() -> {
+                    findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+                    String token = responseJson.optString("token", "");
+                    JSONObject user = responseJson.optJSONObject("user");
+                    if (token.trim().isEmpty() || user == null) {
+                        Snackbar.make(findViewById(R.id.signUp), "Backend signup succeeded but response was incomplete.", Snackbar.LENGTH_LONG).show();
+                        return;
                     }
-                });
 
-            }else {
-                String msg = Objects.requireNonNull(task.getException()).getMessage();
-                Toast.makeText(SignUpActivity.this, msg, Toast.LENGTH_LONG).show();
-                findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+                    sessionManager.saveSession(token, user);
+                    Intent intent = new Intent(SignUpActivity.this, BackendHomeActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK| Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                runOnUiThread(() -> {
+                    findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+                    Snackbar.make(findViewById(R.id.signUp), message, Snackbar.LENGTH_LONG).show();
+                });
             }
         });
 

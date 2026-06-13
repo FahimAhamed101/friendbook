@@ -105,12 +105,15 @@ android {
         
         // Read Mapbox token from local.properties
         def mapboxToken = ""
+        def backendBaseUrl = "http://10.0.2.2:4000/api"
         if (project.rootProject.file('local.properties').exists()) {
             def props = new Properties()
             props.load(new FileInputStream(project.rootProject.file('local.properties')))
             mapboxToken = props.getProperty('MAPBOX_ACCESS_TOKEN', '')
+            backendBaseUrl = props.getProperty('BACKEND_BASE_URL', backendBaseUrl)
         }
         buildConfigField 'String', 'MAPBOX_ACCESS_TOKEN', "\"${mapboxToken}\""
+        buildConfigField 'String', 'BACKEND_BASE_URL', "\"${backendBaseUrl}\""
     }
 
     buildTypes {

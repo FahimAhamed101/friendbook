@@ -34,6 +34,7 @@ import com.google.firebase.storage.StorageReference;
 import com.mapbox.api.staticmap.v1.MapboxStaticMap;
 import com.mapbox.api.staticmap.v1.StaticMapCriteria;
 import com.mapbox.geojson.Point;
+import com.app.myfriend.BuildConfig;
 import com.app.myfriend.MediaViewActivity;
 import com.app.myfriend.R;
 import com.app.myfriend.group.GroupChatActivity;

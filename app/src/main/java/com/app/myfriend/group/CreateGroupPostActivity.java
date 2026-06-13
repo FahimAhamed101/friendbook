@@ -47,6 +47,7 @@ import com.makeramen.roundedimageview.RoundedImageView;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
+import com.app.myfriend.BuildConfig;
 import com.app.myfriend.live.activities.GoBroadcastActivity;
 import com.app.myfriend.marketPlace.PostProductActivity;
 import com.app.myfriend.NightMode;

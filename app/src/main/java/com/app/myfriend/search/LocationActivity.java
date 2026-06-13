@@ -21,6 +21,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
+import com.app.myfriend.BuildConfig;
 import com.app.myfriend.NightMode;
 import com.app.myfriend.R;
 import com.app.myfriend.adapter.AdapterUsers;

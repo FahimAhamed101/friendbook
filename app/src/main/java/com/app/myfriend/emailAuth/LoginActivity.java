@@ -5,29 +5,27 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.app.myfriend.MainActivity;
 import com.app.myfriend.R;
+import com.app.myfriend.backend.BackendAuthApi;
+import com.app.myfriend.backend.BackendHomeActivity;
+import com.app.myfriend.backend.BackendSessionManager;
 
-import java.util.Objects;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private BackendSessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        //Firebase
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        sessionManager = new BackendSessionManager(this);
 
         //Back
         findViewById(R.id.imageView).setOnClickListener(v -> onBackPressed());
@@ -53,39 +51,50 @@ public class LoginActivity extends AppCompatActivity {
                 Snackbar.make(v,"Enter your password", Snackbar.LENGTH_LONG).show();
                 findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
             }else {
-                mAuth.signInWithEmailAndPassword(mEmail,mPassword).addOnCompleteListener(task -> {
-                    if (task.isSuccessful()){
-
-                        FirebaseDatabase.getInstance().getReference("Users").child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                if (snapshot.exists()){
-                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK| Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    startActivity(intent);
-                                    finish();
-                                }else {
-                                    FirebaseAuth.getInstance().getCurrentUser().delete();
-                                    Snackbar.make(v,"User doesn't exist", Snackbar.LENGTH_LONG).show();
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
-
-
-                    }else {
-                        String msg = Objects.requireNonNull(task.getException()).getMessage();
-                        assert msg != null;
-                        Snackbar.make(v,msg, Snackbar.LENGTH_LONG).show();
-                    }
-                    findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
-                });
+                loginWithBackend(mEmail, mPassword);
             }
         });
 
+    }
+
+    private void loginWithBackend(String email, String password) {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("email", email);
+            payload.put("password", password);
+        } catch (JSONException e) {
+            Snackbar.make(findViewById(R.id.login), "Could not prepare login request.", Snackbar.LENGTH_LONG).show();
+            findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+            return;
+        }
+
+        BackendAuthApi.login(payload, new BackendAuthApi.AuthCallback() {
+            @Override
+            public void onSuccess(JSONObject responseJson) {
+                runOnUiThread(() -> {
+                    findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+                    String token = responseJson.optString("token", "");
+                    JSONObject user = responseJson.optJSONObject("user");
+                    if (token.trim().isEmpty() || user == null) {
+                        Snackbar.make(findViewById(R.id.login), "Backend login succeeded but response was incomplete.", Snackbar.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    sessionManager.saveSession(token, user);
+                    Intent intent = new Intent(LoginActivity.this, BackendHomeActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                runOnUiThread(() -> {
+                    findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+                    Snackbar.make(findViewById(R.id.login), message, Snackbar.LENGTH_LONG).show();
+                });
+            }
+        });
     }
 }

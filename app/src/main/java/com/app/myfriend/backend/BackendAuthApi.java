@@ -52,6 +52,52 @@ public class BackendAuthApi {
         get("/posts/feed", token, callback);
     }
 
+    public static void getDiscoverPeople(String token, AuthCallback callback) {
+        get("/profile/discover/people", token, callback);
+    }
+
+    public static void getConversations(String token, AuthCallback callback) {
+        get("/chat/conversations", token, callback);
+    }
+
+    public static void getConversationMessages(String token, String conversationId, String recipientId, AuthCallback callback) {
+        String path = "/chat/conversations/" + conversationId + "/messages";
+        if (recipientId != null && !recipientId.trim().isEmpty()) {
+            path = path + "?recipientId=" + recipientId.trim();
+        }
+        get(path, token, callback);
+    }
+
+    public static void openConversation(String token, String recipientId, AuthCallback callback) {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("recipientId", recipientId);
+        } catch (JSONException e) {
+            callback.onError("Could not prepare conversation request.");
+            return;
+        }
+        post("/chat/conversations", token, payload, callback);
+    }
+
+    public static void sendMessage(String token, String conversationId, String recipientId, String content, AuthCallback callback) {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("content", content);
+            if (recipientId != null && !recipientId.trim().isEmpty()) {
+                payload.put("recipientId", recipientId.trim());
+            }
+        } catch (JSONException e) {
+            callback.onError("Could not prepare message.");
+            return;
+        }
+        post("/chat/conversations/" + conversationId + "/messages", token, payload, callback);
+    }
+
+    public static void markConversationRead(String token, String conversationId, AuthCallback callback) {
+        JSONObject payload = new JSONObject();
+        post("/chat/conversations/" + conversationId + "/read", token, payload, callback);
+    }
+
     public static String resolveUrl(String rawUrl) {
         String normalized = String.valueOf(rawUrl == null ? "" : rawUrl).trim();
         if (normalized.isEmpty()) {
@@ -74,7 +120,12 @@ public class BackendAuthApi {
 
     private static void post(String path, JSONObject payload, AuthCallback callback) {
         List<String> baseUrls = getBaseUrls();
-        attemptPost(baseUrls, 0, path, payload, callback);
+        attemptPost(baseUrls, 0, path, null, payload, callback);
+    }
+
+    private static void post(String path, String token, JSONObject payload, AuthCallback callback) {
+        List<String> baseUrls = getBaseUrls();
+        attemptPost(baseUrls, 0, path, token, payload, callback);
     }
 
     private static void get(String path, String token, AuthCallback callback) {
@@ -82,19 +133,22 @@ public class BackendAuthApi {
         attemptGet(baseUrls, 0, path, token, callback);
     }
 
-    private static void attemptPost(List<String> baseUrls, int index, String path, JSONObject payload, AuthCallback callback) {
+    private static void attemptPost(List<String> baseUrls, int index, String path, String token, JSONObject payload, AuthCallback callback) {
         if (index >= baseUrls.size()) {
             callback.onError("Could not reach backend. Start the backend server and set BACKEND_BASE_URL if needed.");
             return;
         }
 
         RequestBody body = RequestBody.create(payload.toString(), JSON);
-        Request request = new Request.Builder()
+        Request.Builder builder = new Request.Builder()
                 .url(baseUrls.get(index) + path)
-                .post(body)
-                .build();
+                .post(body);
+        if (token != null && !token.trim().isEmpty()) {
+            builder.addHeader("Authorization", "Bearer " + token);
+        }
+        Request request = builder.build();
 
-        CLIENT.newCall(request).enqueue(new RetryingJsonCallback(baseUrls, index, path, payload, null, callback, true));
+        CLIENT.newCall(request).enqueue(new RetryingJsonCallback(baseUrls, index, path, payload, token, callback, true));
     }
 
     private static void attemptGet(List<String> baseUrls, int index, String path, String token, AuthCallback callback) {
@@ -161,7 +215,7 @@ public class BackendAuthApi {
         public void onFailure(Call call, IOException e) {
             if (index + 1 < baseUrls.size()) {
                 if (isPost) {
-                    attemptPost(baseUrls, index + 1, path, payload, callback);
+                    attemptPost(baseUrls, index + 1, path, token, payload, callback);
                 } else {
                     attemptGet(baseUrls, index + 1, path, token, callback);
                 }

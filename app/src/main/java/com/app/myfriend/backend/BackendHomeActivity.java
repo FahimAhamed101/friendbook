@@ -46,6 +46,9 @@ public class BackendHomeActivity extends AppCompatActivity {
         recyclerView.setAdapter(feedAdapter);
 
         findViewById(R.id.refreshButton).setOnClickListener(v -> loadBackendHome());
+        findViewById(R.id.profileButton).setOnClickListener(v -> startActivity(new Intent(this, BackendProfileActivity.class)));
+        findViewById(R.id.chatButton).setOnClickListener(v -> startActivity(new Intent(this, BackendChatListActivity.class)));
+        findViewById(R.id.peopleButton).setOnClickListener(v -> startActivity(new Intent(this, BackendDiscoverActivity.class)));
         findViewById(R.id.logoutButton).setOnClickListener(v -> {
             sessionManager.clear();
             redirectToLogin();

@@ -227,6 +227,10 @@
         <activity android:name="com.app.myfriend.profile.UserProfileActivity" />
         <activity android:name="com.app.myfriend.profile.EditProfileActivity" />
         <activity android:name="com.app.myfriend.emailAuth.ForgotPasswordActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendChatThreadActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendChatListActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendDiscoverActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendProfileActivity" />
         <activity android:name="com.app.myfriend.backend.BackendHomeActivity" />
         <activity android:name="com.app.myfriend.Check" />
         <activity android:name="com.app.myfriend.phoneAuth.RegisterActivity" />

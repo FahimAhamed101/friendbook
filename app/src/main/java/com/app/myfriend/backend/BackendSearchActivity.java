@@ -2,7 +2,10 @@ package com.app.myfriend.backend;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,28 +20,33 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BackendDiscoverActivity extends AppCompatActivity {
+public class BackendSearchActivity extends AppCompatActivity {
 
     private BackendSessionManager sessionManager;
     private BackendPeopleAdapter peopleAdapter;
     private View progressBar;
     private TextView emptyView;
+    private EditText searchInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_backend_discover);
+        setContentView(R.layout.activity_backend_search);
 
         sessionManager = new BackendSessionManager(this);
-        progressBar = findViewById(R.id.discoverProgressBar);
-        emptyView = findViewById(R.id.discoverEmpty);
+        progressBar = findViewById(R.id.searchProgressBar);
+        emptyView = findViewById(R.id.searchEmpty);
+        searchInput = findViewById(R.id.searchInput);
 
-        RecyclerView recyclerView = findViewById(R.id.discoverRecyclerView);
+        RecyclerView recyclerView = findViewById(R.id.searchRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         peopleAdapter = new BackendPeopleAdapter(new BackendPeopleAdapter.OnPersonClickListener() {
             @Override
             public void onPersonClicked(BackendPerson person) {
-                openProfile(person);
+                Intent intent = new Intent(BackendSearchActivity.this, BackendUserProfileActivity.class);
+                intent.putExtra("userId", person.id);
+                intent.putExtra("title", person.name);
+                startActivity(intent);
             }
 
             @Override
@@ -48,18 +56,26 @@ public class BackendDiscoverActivity extends AppCompatActivity {
         });
         recyclerView.setAdapter(peopleAdapter);
 
-        findViewById(R.id.discoverBack).setOnClickListener(v -> finish());
-        BackendNavigationHelper.setup(this, R.id.nav_reels);
-        loadPeople();
+        findViewById(R.id.searchBack).setOnClickListener(v -> finish());
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                loadResults(s == null ? "" : s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        loadResults("");
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadPeople();
-    }
-
-    private void loadPeople() {
+    private void loadResults(String query) {
         String token = sessionManager.getToken();
         if (token.trim().isEmpty()) {
             finish();
@@ -67,7 +83,8 @@ public class BackendDiscoverActivity extends AppCompatActivity {
         }
 
         progressBar.setVisibility(View.VISIBLE);
-        BackendAuthApi.getDiscoverPeople(token, new BackendAuthApi.AuthCallback() {
+        emptyView.setVisibility(View.GONE);
+        BackendAuthApi.searchPeople(token, query, new BackendAuthApi.AuthCallback() {
             @Override
             public void onSuccess(JSONObject responseJson) {
                 runOnUiThread(() -> {
@@ -80,6 +97,7 @@ public class BackendDiscoverActivity extends AppCompatActivity {
                             if (user == null) {
                                 continue;
                             }
+
                             items.add(new BackendPerson(
                                     user.optString("id", ""),
                                     user.optString("name", "User"),
@@ -90,42 +108,12 @@ public class BackendDiscoverActivity extends AppCompatActivity {
                             ));
                         }
                     }
+
                     peopleAdapter.submitList(items);
                     emptyView.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-                });
-            }
-
-            @Override
-            public void onError(String message) {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    emptyView.setVisibility(View.VISIBLE);
-                    emptyView.setText(message);
-                });
-            }
-        });
-    }
-
-    private void openProfile(BackendPerson person) {
-        Intent intent = new Intent(this, BackendUserProfileActivity.class);
-        intent.putExtra("userId", person.id);
-        intent.putExtra("title", person.name);
-        startActivity(intent);
-    }
-
-    private void openConversationForPerson(BackendPerson person) {
-        String token = sessionManager.getToken();
-        progressBar.setVisibility(View.VISIBLE);
-        BackendAuthApi.openConversation(token, person.id, new BackendAuthApi.AuthCallback() {
-            @Override
-            public void onSuccess(JSONObject responseJson) {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    Intent intent = new Intent(BackendDiscoverActivity.this, BackendChatThreadActivity.class);
-                    intent.putExtra("conversationId", responseJson.optString("conversationId", ""));
-                    intent.putExtra("recipientId", person.id);
-                    intent.putExtra("title", person.name);
-                    startActivity(intent);
+                    if (items.isEmpty()) {
+                        emptyView.setText("No people found.");
+                    }
                 });
             }
 
@@ -149,10 +137,7 @@ public class BackendDiscoverActivity extends AppCompatActivity {
         BackendAuthApi.toggleFollowUser(sessionManager.getToken(), person.id, new BackendAuthApi.AuthCallback() {
             @Override
             public void onSuccess(JSONObject responseJson) {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    loadPeople();
-                });
+                runOnUiThread(() -> loadResults(searchInput.getText().toString()));
             }
 
             @Override

@@ -8,9 +8,9 @@ import android.widget.EditText;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.app.myfriend.MainActivity;
 import com.app.myfriend.R;
 import com.app.myfriend.backend.BackendAuthApi;
-import com.app.myfriend.backend.BackendHomeActivity;
 import com.app.myfriend.backend.BackendSessionManager;
 
 import org.json.JSONException;
@@ -81,7 +81,7 @@ public class LoginActivity extends AppCompatActivity {
                     }
 
                     sessionManager.saveSession(token, user);
-                    Intent intent = new Intent(LoginActivity.this, BackendHomeActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();

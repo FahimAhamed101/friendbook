@@ -2,21 +2,24 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="16dp"
-    android:background="#F8FAFD"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:background="@android:color/white"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="16dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/feedAuthorImage"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:src="@mipmap/ic_launcher" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/avatar" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -38,41 +41,138 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:textColor="#5E6D8A"
+                android:textColor="#7A879A"
                 android:textSize="13sp" />
 
             <TextView
-                android:id="@+id/feedActivity"
+                android:id="@+id/feedMeta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="#7888A6"
+                android:textColor="#7A879A"
                 android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 
     <TextView
+        android:id="@+id/feedTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
         android:id="@+id/feedContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
         android:lineSpacingExtra="3dp"
-        android:textColor="@android:color/black"
+        android:textColor="#1C2430"
         android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/feedLinkLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/btn_round"
+        android:backgroundTint="#EAF1FF"
+        android:paddingStart="12dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp"
+        android:textColor="@color/colorPrimary"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/feedImage"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="240dp"
         android:layout_marginTop="12dp"
         android:scaleType="centerCrop"
         android:visibility="gone" />
 
     <TextView
         android:id="@+id/feedStats"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
-        android:textColor="#5E6D8A"
+        android:layout_marginEnd="16dp"
+        android:textColor="#7A879A"
         android:textSize="13sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
+        android:background="#E9EEF6" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="10dp">
+
+        <Button
+            android:id="@+id/feedLikeButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:backgroundTint="#EAF1FF"
+            android:text="Like"
+            android:textAllCaps="false"
+            android:textColor="@color/colorPrimary" />
+
+        <Button
+            android:id="@+id/feedCommentButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:backgroundTint="#F1F4F9"
+            android:text="Comment"
+            android:textAllCaps="false"
+            android:textColor="#263246" />
+
+        <Button
+            android:id="@+id/feedShareButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:backgroundTint="#F1F4F9"
+            android:text="Share"
+            android:textAllCaps="false"
+            android:textColor="#263246" />
+
+        <Button
+            android:id="@+id/feedSaveButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:backgroundTint="#F1F4F9"
+            android:text="Save"
+            android:textAllCaps="false"
+            android:textColor="#263246" />
+    </LinearLayout>
 </LinearLayout>

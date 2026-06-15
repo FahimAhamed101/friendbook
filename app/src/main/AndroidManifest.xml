@@ -231,6 +231,13 @@
         <activity android:name="com.app.myfriend.backend.BackendChatListActivity" />
         <activity android:name="com.app.myfriend.backend.BackendDiscoverActivity" />
         <activity android:name="com.app.myfriend.backend.BackendProfileActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendEditProfileActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendUserProfileActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendSearchActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendNotificationsActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendCreatePostActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendSavedActivity" />
+        <activity android:name="com.app.myfriend.backend.BackendMenuActivity" />
         <activity android:name="com.app.myfriend.backend.BackendHomeActivity" />
         <activity android:name="com.app.myfriend.Check" />
         <activity android:name="com.app.myfriend.phoneAuth.RegisterActivity" />

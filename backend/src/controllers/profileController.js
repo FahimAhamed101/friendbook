@@ -375,8 +375,10 @@ async function getDiscoverPeople(req, res, next) {
     const viewerFollowingIds = getObjectIdStrings(req.user.following);
     const viewerFollowingSet = new Set(viewerFollowingIds);
     const limit = parsePositiveInteger(req.query.limit, 24);
+    const normalizedQuery = String(req.query.q || req.query.search || "").trim();
+    const searchQuery = normalizedQuery ? buildUserSearchQuery(normalizedQuery) : {};
 
-    const users = await User.find({ _id: { $ne: req.user._id } })
+    const users = await User.find({ _id: { $ne: req.user._id }, ...searchQuery })
       .sort({ createdAt: -1 })
       .limit(limit);
 
@@ -421,6 +423,25 @@ async function updateMyProfile(req, res, next) {
       req.user[field] = value;
       didUpdate = true;
     });
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "username")) {
+      const username = normalizeOptionalText(req.body.username)?.toLowerCase() || null;
+      if (username && !/^[a-z0-9._-]{3,30}$/.test(username)) {
+        res.status(400).json({ message: "Username must be 3-30 characters and use only letters, numbers, dot, underscore, or hyphen." });
+        return;
+      }
+
+      if (username && username !== String(req.user.username || "").trim().toLowerCase()) {
+        const existingUsername = await User.findOne({ username });
+        if (existingUsername && String(existingUsername._id) !== String(req.user._id)) {
+          res.status(409).json({ message: "This username is already taken." });
+          return;
+        }
+      }
+
+      req.user.username = username;
+      didUpdate = true;
+    }
 
     if (Object.prototype.hasOwnProperty.call(req.body, "website")) {
       const website = normalizeOptionalUrl(req.body.website);

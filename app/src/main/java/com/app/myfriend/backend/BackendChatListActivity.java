@@ -41,6 +41,7 @@ public class BackendChatListActivity extends AppCompatActivity {
         findViewById(R.id.chatListBack).setOnClickListener(v -> finish());
         findViewById(R.id.chatListNewChat).setOnClickListener(v -> startActivity(new Intent(this, BackendDiscoverActivity.class)));
 
+        BackendNavigationHelper.setup(this, R.id.nav_chat);
         loadConversations();
     }
 

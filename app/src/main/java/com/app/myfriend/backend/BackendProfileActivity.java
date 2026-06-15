@@ -15,7 +15,6 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -52,10 +51,11 @@ public class BackendProfileActivity extends AppCompatActivity {
 
         RecyclerView timelineRecycler = findViewById(R.id.profileTimelineRecycler);
         timelineRecycler.setLayoutManager(new LinearLayoutManager(this));
-        timelineAdapter = new BackendFeedAdapter();
+        timelineAdapter = new BackendFeedAdapter(null);
         timelineRecycler.setAdapter(timelineAdapter);
 
         findViewById(R.id.profileBack).setOnClickListener(v -> finish());
+        findViewById(R.id.profileEdit).setOnClickListener(v -> startActivity(new Intent(this, BackendEditProfileActivity.class)));
         findViewById(R.id.profileHome).setOnClickListener(v -> {
             startActivity(new Intent(this, BackendHomeActivity.class));
             finish();
@@ -63,6 +63,13 @@ public class BackendProfileActivity extends AppCompatActivity {
         findViewById(R.id.profileChats).setOnClickListener(v -> startActivity(new Intent(this, BackendChatListActivity.class)));
         findViewById(R.id.profileDiscover).setOnClickListener(v -> startActivity(new Intent(this, BackendDiscoverActivity.class)));
 
+        BackendNavigationHelper.setup(this, R.id.nav_user);
+        loadProfile();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadProfile();
     }
 
@@ -100,33 +107,13 @@ public class BackendProfileActivity extends AppCompatActivity {
 
                     String avatarUrl = BackendAuthApi.resolveUrl(profile.optString("avatarUrl", ""));
                     if (!avatarUrl.isEmpty() && avatarUrl.startsWith("http")) {
-                        Picasso.get().load(avatarUrl).placeholder(R.mipmap.ic_launcher).error(R.mipmap.ic_launcher).into(avatarView);
+                        Picasso.get().load(avatarUrl).placeholder(R.drawable.avatar).error(R.drawable.avatar).into(avatarView);
+                    } else {
+                        avatarView.setImageResource(R.drawable.avatar);
                     }
 
                     JSONArray timeline = responseJson.optJSONArray("timeline");
-                    List<BackendFeedPost> items = new ArrayList<>();
-                    if (timeline != null) {
-                        for (int i = 0; i < timeline.length(); i++) {
-                            JSONObject post = timeline.optJSONObject(i);
-                            if (post == null) {
-                                continue;
-                            }
-                            JSONObject stats = post.optJSONObject("stats");
-                            items.add(new BackendFeedPost(
-                                    post.optString("id", ""),
-                                    post.optString("authorName", ""),
-                                    post.optString("authorHandle", ""),
-                                    post.optString("authorImage", ""),
-                                    post.optString("activity", ""),
-                                    post.optString("published", ""),
-                                    post.optString("content", ""),
-                                    post.optString("image", ""),
-                                    stats != null ? stats.optInt("likeCount", 0) : 0,
-                                    stats != null ? stats.optInt("commentCount", 0) : 0,
-                                    stats != null ? stats.optInt("shareCount", 0) : 0
-                            ));
-                        }
-                    }
+                    List<BackendFeedPost> items = BackendFeedPostParser.parse(timeline);
                     timelineAdapter.submitList(items);
                     emptyView.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                 });

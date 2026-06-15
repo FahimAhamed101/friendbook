@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.app.myfriend.backend.BackendHomeActivity;
 import com.app.myfriend.backend.BackendSessionManager;
 import com.app.myfriend.welcome.IntroLast;
 
@@ -20,7 +19,7 @@ public class Check extends AppCompatActivity {
         super.onStart();
         BackendSessionManager backendSessionManager = new BackendSessionManager(this);
         if (backendSessionManager.isLoggedIn()) {
-            startActivity(new Intent(Check.this, BackendHomeActivity.class));
+            startActivity(new Intent(Check.this, MainActivity.class));
             finish();
             return;
         }

@@ -20,7 +20,9 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class BackendPeopleAdapter extends RecyclerView.Adapter<BackendPeopleAdapter.PersonViewHolder> {
 
     public interface OnPersonClickListener {
-        void onMessageClicked(BackendPerson person);
+        void onPersonClicked(BackendPerson person);
+
+        void onActionClicked(BackendPerson person);
     }
 
     private final List<BackendPerson> people = new ArrayList<>();
@@ -51,12 +53,12 @@ public class BackendPeopleAdapter extends RecyclerView.Adapter<BackendPeopleAdap
         holder.action.setText(person.actionLabel == null || person.actionLabel.trim().isEmpty() ? "Message" : person.actionLabel);
         String imageUrl = BackendAuthApi.resolveUrl(person.image);
         if (!imageUrl.isEmpty() && imageUrl.startsWith("http")) {
-            Picasso.get().load(imageUrl).placeholder(R.mipmap.ic_launcher).error(R.mipmap.ic_launcher).into(holder.avatar);
+            Picasso.get().load(imageUrl).placeholder(R.drawable.avatar).error(R.drawable.avatar).into(holder.avatar);
         } else {
-            holder.avatar.setImageResource(R.mipmap.ic_launcher);
+            holder.avatar.setImageResource(R.drawable.avatar);
         }
-        holder.action.setOnClickListener(v -> listener.onMessageClicked(person));
-        holder.itemView.setOnClickListener(v -> listener.onMessageClicked(person));
+        holder.action.setOnClickListener(v -> listener.onActionClicked(person));
+        holder.itemView.setOnClickListener(v -> listener.onPersonClicked(person));
     }
 
     @Override

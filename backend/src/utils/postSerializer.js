@@ -287,6 +287,13 @@ function serializePost(post, viewerId) {
   const likeCount = serializedReactions.length;
   const commentCount = serializedComments.length;
   const shareCount = Number(post?.shareCount || 0);
+  const savedBy = Array.isArray(post?.savedBy) ? post.savedBy : [];
+  const savedByViewer = savedBy.some((entry) => {
+    if (entry && typeof entry === "object" && entry._id) {
+      return String(entry._id) === String(viewerId || "");
+    }
+    return String(entry || "") === String(viewerId || "");
+  });
   const title = String(post?.title || "").trim() || null;
   const description = String(post?.content || "").trim();
   const image = pickFirstNonEmpty(post?.displayImageUrl, attachmentType === "image" ? post?.attachmentUrl : null);
@@ -337,6 +344,8 @@ function serializePost(post, viewerId) {
       likeCount,
       commentCount,
       shareCount,
+      saveCount: savedBy.length,
+      savedByViewer,
       likedByViewer: Boolean(viewerReaction),
       viewerReaction,
       reactionCounts,

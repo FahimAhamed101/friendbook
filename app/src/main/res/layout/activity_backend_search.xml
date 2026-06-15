@@ -8,40 +8,31 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#F3F7FE"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="16dp">
 
         <TextView
-            android:id="@+id/chatListBack"
+            android:id="@+id/searchBack"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Back"
             android:textColor="@color/colorPrimary"
             android:textStyle="bold" />
 
-        <TextView
+        <EditText
+            android:id="@+id/searchInput"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="Chats"
-            android:textColor="@android:color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/chatListNewChat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New"
-            android:textColor="@color/colorPrimary"
-            android:textStyle="bold" />
+            android:background="#F3F6FB"
+            android:hint="Search..."
+            android:padding="12dp" />
     </LinearLayout>
 
     <ProgressBar
-        android:id="@+id/chatListProgressBar"
+        android:id="@+id/searchProgressBar"
         style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -49,29 +40,19 @@
         android:layout_marginTop="14dp" />
 
     <TextView
-        android:id="@+id/chatListEmpty"
+        android:id="@+id/searchEmpty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:gravity="center"
-        android:text="No conversations yet."
+        android:text="No results found."
         android:textColor="#5E6D8A"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/chatListRecyclerView"
+        android:id="@+id/searchRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:padding="16dp" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/backendBottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        app:itemIconTint="@color/selector"
-        app:labelVisibilityMode="unlabeled"
-        app:menu="@menu/bottom_nav"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
 </LinearLayout>

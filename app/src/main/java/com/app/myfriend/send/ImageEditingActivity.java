@@ -121,7 +121,13 @@ public class ImageEditingActivity extends Activity implements PermissionRequest.
 
             Toast.makeText(this, "Image Saved", Toast.LENGTH_SHORT).show();
 
-            if (getIntent().hasExtra("type")){
+            if (getIntent().getBooleanExtra("return_result", false)) {
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("edited_uri", data.getResultUri().toString());
+                resultIntent.putExtra("media_type", "image");
+                setResult(RESULT_OK, resultIntent);
+                finish();
+            } else if (getIntent().hasExtra("type")){
                 Intent i =   new Intent(ImageEditingActivity.this, AddStoryActivity.class);
                 i.putExtra("type", "image");
                 i.putExtra("uri", data.getResultUri().toString());
@@ -141,8 +147,12 @@ public class ImageEditingActivity extends Activity implements PermissionRequest.
             ));
 
         } else if (resultCode == RESULT_CANCELED && requestCode == PESDK_RESULT) {
-
-            onBackPressed();
+            if (getIntent().getBooleanExtra("return_result", false)) {
+                setResult(RESULT_CANCELED);
+                finish();
+            } else {
+                onBackPressed();
+            }
 
         }
     }

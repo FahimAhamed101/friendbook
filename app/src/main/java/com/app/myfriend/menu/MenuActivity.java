@@ -145,7 +145,7 @@ public class MenuActivity extends AppCompatActivity {
 
         });
 
-        findViewById(R.id.saved).setOnClickListener(v -> startActivity(new Intent(MenuActivity.this, SavedActivity.class)));
+        findViewById(R.id.saved).setOnClickListener(v -> startActivity(new Intent(MenuActivity.this, com.app.myfriend.backend.BackendSavedActivity.class)));
 
         findViewById(R.id.live).setOnClickListener(v -> {
 

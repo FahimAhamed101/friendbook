@@ -10,9 +10,9 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.app.myfriend.MainActivity;
 import com.app.myfriend.R;
 import com.app.myfriend.backend.BackendAuthApi;
-import com.app.myfriend.backend.BackendHomeActivity;
 import com.app.myfriend.backend.BackendSessionManager;
 import com.app.myfriend.menu.PrivacyActivity;
 import com.app.myfriend.menu.TermsActivity;
@@ -123,7 +123,7 @@ public class SignUpActivity extends AppCompatActivity {
                     }
 
                     sessionManager.saveSession(token, user);
-                    Intent intent = new Intent(SignUpActivity.this, BackendHomeActivity.class);
+                    Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK| Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();

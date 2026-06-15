@@ -2,6 +2,83 @@ const Post = require("../models/Post");
 const mongoose = require("mongoose");
 const { toFeedPost, toTimelinePost } = require("../utils/postSerializer");
 
+const DEFAULT_FEED_SEED = [
+  {
+    postType: "custom",
+    activityLabel: "created a post",
+    title: "New collaboration thread",
+    content:
+      "I'm opening a new research collaboration thread for field-note exchange, paper review, and discussion scheduling. Share your current focus and availability below.",
+    commentsOpen: true,
+  },
+  {
+    postType: "image",
+    activityLabel: "shared a field update",
+    title: "Archive visit notes",
+    content:
+      "Collected primary material from the archive today. The notes are cleaner than expected, and I will turn this into a short methods summary tonight.",
+    displayImageUrl: "https://picsum.photos/id/1040/1200/900",
+    commentsOpen: true,
+  },
+  {
+    postType: "album",
+    activityLabel: "added an image album",
+    title: "Conference moments",
+    content:
+      "A few snapshots from the last conference roundtable. The discussion on supervision models and interdisciplinary publishing was especially strong.",
+    galleryImages: [
+      "https://picsum.photos/id/1015/1200/900",
+      "https://picsum.photos/id/1016/1200/900",
+      "https://picsum.photos/id/1025/1200/900",
+    ],
+    morePhotosCount: 6,
+    commentsOpen: true,
+  },
+  {
+    postType: "link",
+    activityLabel: "shared a link",
+    title: "Draft reading list",
+    content:
+      "This reading list covers recent work on educational leadership, assessment practice, and collaborative supervision models.",
+    linkUrl: "https://example.com/research-reading-list",
+    ctaLabel: "Open link",
+    commentsOpen: true,
+  },
+];
+
+async function ensureSeedFeedPostsForUser(userId) {
+  const existingCount = await Post.countDocuments({
+    author: userId,
+    activityFeed: true,
+  });
+
+  if (existingCount > 0) {
+    return;
+  }
+
+  const createdAtBase = Date.now();
+  await Post.insertMany(
+    DEFAULT_FEED_SEED.map((seed, index) => ({
+      author: userId,
+      postType: seed.postType,
+      activityLabel: seed.activityLabel,
+      title: seed.title,
+      content: seed.content,
+      displayImageUrl: seed.displayImageUrl || null,
+      galleryImages: seed.galleryImages || [],
+      morePhotosCount: seed.morePhotosCount || 0,
+      linkUrl: seed.linkUrl || null,
+      ctaLabel: seed.ctaLabel || null,
+      audience: "joined-groups",
+      activityFeed: true,
+      myStory: false,
+      commentsOpen: seed.commentsOpen === true,
+      createdAt: new Date(createdAtBase - index * 60 * 60 * 1000),
+      updatedAt: new Date(createdAtBase - index * 60 * 60 * 1000),
+    }))
+  );
+}
+
 const ALLOWED_AUDIENCES = new Set(["public", "private", "specific-friend", "only-friends", "joined-groups"]);
 const ALLOWED_ATTACHMENT_TYPES = new Set(["image", "video", "file"]);
 const ALLOWED_POST_TYPES = new Set(["custom", "article", "premium", "image", "album", "link", "video", "gif", "audio", "sponsor"]);
@@ -352,7 +429,7 @@ function syncLegacyLikes(post) {
 async function getFeedPosts(req, res, next) {
   try {
     const now = new Date();
-    const posts = await Post.find({
+    let posts = await Post.find({
       activityFeed: true,
       $or: [{ scheduledFor: null }, { scheduledFor: { $lte: now } }],
     })
@@ -360,6 +437,18 @@ async function getFeedPosts(req, res, next) {
       .populate("comments.user")
       .sort({ createdAt: -1 })
       .limit(50);
+
+    if (posts.length === 0) {
+      await ensureSeedFeedPostsForUser(req.user._id);
+      posts = await Post.find({
+        activityFeed: true,
+        $or: [{ scheduledFor: null }, { scheduledFor: { $lte: now } }],
+      })
+        .populate("author")
+        .populate("comments.user")
+        .sort({ createdAt: -1 })
+        .limit(50);
+    }
 
     const visiblePosts = posts
       .filter((post) => canUserViewPost(post, String(req.user._id)))
@@ -588,6 +677,63 @@ async function sharePost(req, res, next) {
   }
 }
 
+async function toggleSavedPost(req, res, next) {
+  try {
+    const post = await findPostForViewer(req.params.postId, String(req.user._id));
+    if (!post) {
+      res.status(404).json({ message: "Post not found." });
+      return;
+    }
+
+    const viewerId = String(req.user._id);
+    const savedByIds = Array.isArray(post.savedBy)
+      ? post.savedBy.map((entry) =>
+          entry && typeof entry === "object" && entry._id ? String(entry._id) : String(entry || "")
+        )
+      : [];
+    const isSaved = savedByIds.includes(viewerId);
+
+    if (isSaved) {
+      post.savedBy = savedByIds.filter((userId) => userId !== viewerId);
+    } else {
+      post.savedBy = [...savedByIds, viewerId];
+    }
+
+    await post.save();
+    await post.populate("author");
+    await post.populate("comments.user");
+
+    res.status(200).json({
+      message: isSaved ? "Post removed from saved items." : "Post saved successfully.",
+      post: toFeedPost(post, req.user._id),
+      isSaved: !isSaved,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getSavedPosts(req, res, next) {
+  try {
+    const now = new Date();
+    const posts = await Post.find({
+      savedBy: req.user._id,
+      $or: [{ scheduledFor: null }, { scheduledFor: { $lte: now } }],
+    })
+      .populate("author")
+      .populate("comments.user")
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(50);
+
+    res.status(200).json({
+      message: "Saved posts loaded successfully.",
+      posts: posts.map((post) => toFeedPost(post, req.user._id)),
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getFeedPosts,
   getPostById,
@@ -596,4 +742,6 @@ module.exports = {
   togglePostLike,
   addPostComment,
   sharePost,
+  toggleSavedPost,
+  getSavedPosts,
 };

@@ -121,10 +121,18 @@ class VideoEditActivity : Activity(), PermissionRequest.Response {
             Log.i("VESDK", "Source video is located here ${data.sourceUri}")
             Log.i("VESDK", "Result video is located here ${data.resultUri}")
 
-            val intent = Intent(this, PostReelActivity::class.java)
-           intent.putExtra("value", data.resultUri.toString())
-           startActivity(intent)
-           finish()
+            if (getIntent().getBooleanExtra("return_result", false)) {
+                val resultIntent = Intent()
+                resultIntent.putExtra("edited_uri", data.resultUri.toString())
+                resultIntent.putExtra("media_type", "video")
+                setResult(RESULT_OK, resultIntent)
+                finish()
+            } else {
+                val intent = Intent(this, PostReelActivity::class.java)
+                intent.putExtra("value", data.resultUri.toString())
+                startActivity(intent)
+                finish()
+            }
 
 
             // OPTIONAL: read the latest state to save it as a serialisation
@@ -141,7 +149,12 @@ class VideoEditActivity : Activity(), PermissionRequest.Response {
             }
 
         } else if (resultCode == RESULT_CANCELED && requestCode == VESDK_RESULT) {
-            onBackPressed()
+            if (getIntent().getBooleanExtra("return_result", false)) {
+                setResult(RESULT_CANCELED)
+                finish()
+            } else {
+                onBackPressed()
+            }
         }
     }
 

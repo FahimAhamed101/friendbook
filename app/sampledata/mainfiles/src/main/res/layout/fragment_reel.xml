@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true">
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/videoPager"
+        android:orientation="vertical"/>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/videoPagerOne"
+        android:visibility="gone"
+        android:orientation="vertical"/>
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="30dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        app:tabIndicatorColor="#fff"
+        app:tabSelectedTextColor="#fff"
+        app:tabTextAppearance="@style/TabAppearance"
+        app:tabTextColor="#fff"
+        tools:ignore="UnknownIdInLayout">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/for_you"
+            tools:ignore="ContentDescription" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/following"
+            tools:ignore="ContentDescription" />
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <TextView
+        android:text="@string/no_reels"
+        android:alpha="0.5"
+        android:id="@+id/no"
+        android:visibility="gone"
+        android:fontFamily="@font/bold_roboto"
+        android:textSize="25sp"
+        android:textColor="#fff"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+       tools:ignore="ContentDescription" />
+
+</RelativeLayout>

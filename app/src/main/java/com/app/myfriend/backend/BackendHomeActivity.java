@@ -34,9 +34,7 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
     private BackendHomeStoryAdapter storyAdapter;
     private View progressBar;
     private TextView titleView;
-    private TextView subtitleView;
-    private TextView detailsView;
-    private TextView emptyView;
+    private TextView chatBadge;
     private CircleImageView avatarView;
 
     @Override
@@ -47,9 +45,7 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
         sessionManager = new BackendSessionManager(this);
         progressBar = findViewById(R.id.progressBar);
         titleView = findViewById(R.id.backendTitle);
-        subtitleView = findViewById(R.id.backendSubtitle);
-        detailsView = findViewById(R.id.backendDetails);
-        emptyView = findViewById(R.id.emptyState);
+        chatBadge = findViewById(R.id.chatBadgeCount);
         avatarView = findViewById(R.id.homeAvatar);
 
         RecyclerView storiesRecyclerView = findViewById(R.id.storiesRecyclerView);
@@ -65,13 +61,9 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
 
         findViewById(R.id.refreshButton).setOnClickListener(v -> loadBackendHome());
         findViewById(R.id.profileButton).setOnClickListener(v -> startActivity(new Intent(this, BackendProfileActivity.class)));
-        findViewById(R.id.chatButton).setOnClickListener(v -> startActivity(new Intent(this, BackendNotificationsActivity.class)));
+        findViewById(R.id.notificationButton).setOnClickListener(v -> startActivity(new Intent(this, BackendNotificationsActivity.class)));
         findViewById(R.id.peopleButton).setOnClickListener(v -> startActivity(new Intent(this, BackendDiscoverActivity.class)));
         findViewById(R.id.searchButton).setOnClickListener(v -> startActivity(new Intent(this, BackendSearchActivity.class)));
-        findViewById(R.id.logoutButton).setOnClickListener(v -> {
-            sessionManager.clear();
-            redirectToLogin();
-        });
 
         findViewById(R.id.createPostCard).setOnClickListener(v -> openCreatePostComposer("custom"));
         findViewById(R.id.imagePostButton).setOnClickListener(v -> openCreatePostComposer("image"));
@@ -85,7 +77,7 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
     @Override
     protected void onResume() {
         super.onResume();
-        if (!sessionManager.getToken().trim().isEmpty()) {
+        if (sessionManager.isLoggedIn()) {
             loadBackendHome();
         }
     }
@@ -98,7 +90,6 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
         }
 
         progressBar.setVisibility(View.VISIBLE);
-        emptyView.setVisibility(View.GONE);
         loadProfile(token);
         loadStories(token);
         loadNotificationCount(token);
@@ -106,7 +97,6 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
     }
 
     private void loadNotificationCount(String token) {
-        TextView countView = findViewById(R.id.chatButton);
         BackendAuthApi.getConversations(token, new BackendAuthApi.AuthCallback() {
             @Override
             public void onSuccess(JSONObject responseJson) {
@@ -121,13 +111,18 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
                             }
                         }
                     }
-                    countView.setText(String.valueOf(Math.max(0, unreadCount)));
+                    if (unreadCount > 0) {
+                        chatBadge.setVisibility(View.VISIBLE);
+                        chatBadge.setText(String.valueOf(unreadCount));
+                    } else {
+                        chatBadge.setVisibility(View.GONE);
+                    }
                 });
             }
 
             @Override
             public void onError(String message) {
-                runOnUiThread(() -> countView.setText("0"));
+                runOnUiThread(() -> chatBadge.setVisibility(View.GONE));
             }
         });
     }
@@ -138,25 +133,11 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
             public void onSuccess(JSONObject responseJson) {
                 runOnUiThread(() -> {
                     JSONObject profile = responseJson.optJSONObject("profile");
-                    if (profile == null) {
-                        return;
-                    }
+                    if (profile == null) return;
 
                     JSONObject user = profile.optJSONObject("user");
                     if (user != null) {
                         sessionManager.saveSession(token, user);
-                    }
-
-                    String displayName = profile.optString("fullName", "").trim();
-                    titleView.setText(displayName.isEmpty() ? getString(R.string.app_name) : getString(R.string.app_name));
-                    subtitleView.setText(profile.optString("handle", ""));
-
-                    String bio = profile.optString("bio", "").trim();
-                    if (bio.isEmpty()) {
-                        detailsView.setVisibility(View.GONE);
-                    } else {
-                        detailsView.setVisibility(View.VISIBLE);
-                        detailsView.setText(bio);
                     }
 
                     String avatarUrl = BackendAuthApi.resolveUrl(profile.optString("avatarUrl", ""));
@@ -174,9 +155,7 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
                     if (message.toLowerCase().contains("token") || message.toLowerCase().contains("unauthorized")) {
                         sessionManager.clear();
                         redirectToLogin();
-                        return;
                     }
-                    subtitleView.setText(message);
                 });
             }
         });
@@ -190,11 +169,9 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
                     JSONArray users = responseJson.optJSONArray("users");
                     List<BackendHomeStory> stories = new ArrayList<>();
                     if (users != null) {
-                        for (int i = 0; i < users.length() && i < 8; i++) {
+                        for (int i = 0; i < users.length() && i < 10; i++) {
                             JSONObject user = users.optJSONObject(i);
-                            if (user == null) {
-                                continue;
-                            }
+                            if (user == null) continue;
                             stories.add(new BackendHomeStory(
                                     user.optString("id", ""),
                                     user.optString("name", "User"),
@@ -222,7 +199,7 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
                     progressBar.setVisibility(View.GONE);
                     List<BackendFeedPost> items = BackendFeedPostParser.parse(responseJson.optJSONArray("posts"));
                     feedAdapter.submitList(items);
-                    emptyView.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                    findViewById(R.id.emptyState).setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                 });
             }
 
@@ -230,8 +207,8 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
             public void onError(String message) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    emptyView.setVisibility(View.VISIBLE);
-                    emptyView.setText(message);
+                    findViewById(R.id.emptyState).setVisibility(View.VISIBLE);
+                    ((TextView)findViewById(R.id.emptyState)).setText(message);
                 });
             }
         });
@@ -244,9 +221,7 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
     }
 
     private void openStoryPerson(BackendHomeStory story) {
-        if (story == null || story.id == null || story.id.trim().isEmpty()) {
-            return;
-        }
+        if (story == null || story.id == null || story.id.trim().isEmpty()) return;
 
         BackendAuthApi.openConversation(sessionManager.getToken(), story.id, new BackendAuthApi.AuthCallback() {
             @Override
@@ -256,6 +231,7 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
                     intent.putExtra("conversationId", responseJson.optString("conversationId", ""));
                     intent.putExtra("recipientId", story.id);
                     intent.putExtra("title", story.name);
+                    intent.putExtra("avatar", story.imageUrl);
                     startActivity(intent);
                 });
             }
@@ -268,30 +244,15 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
     }
 
     @Override
-    public void onLike(BackendFeedPost post) {
-        BackendAuthApi.likePost(sessionManager.getToken(), post.id, new FeedRefreshCallback("Post updated."));
+    public void onLike(BackendFeedPost post, String type) {
+        BackendAuthApi.reactToPost(sessionManager.getToken(), post.id, type, new FeedRefreshCallback("Reaction updated."));
     }
 
     @Override
     public void onComment(BackendFeedPost post) {
-        EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-        input.setHint("Write a comment");
-
-        new AlertDialog.Builder(this)
-                .setTitle("Add comment")
-                .setView(input)
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Post", (dialog, which) -> {
-                    String message = input.getText().toString().trim();
-                    if (message.isEmpty()) {
-                        Toast.makeText(this, "Comment cannot be empty.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    BackendAuthApi.commentOnPost(sessionManager.getToken(), post.id, message, new FeedRefreshCallback("Comment added."));
-                })
-                .show();
+        Intent intent = new Intent(this, BackendCommentActivity.class);
+        intent.putExtra("postId", post.id);
+        startActivity(intent);
     }
 
     @Override
@@ -302,53 +263,35 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
                 runOnUiThread(() -> {
                     Toast.makeText(BackendHomeActivity.this, "Post shared.", Toast.LENGTH_SHORT).show();
                     loadFeed(sessionManager.getToken());
-                    String shareUrl = BackendAuthApi.resolveUrl(!post.linkUrl.trim().isEmpty() ? post.linkUrl : post.attachmentUrl);
-                    String shareText = post.title != null && !post.title.trim().isEmpty()
-                            ? post.title
-                            : post.content;
-                    openShareSheet(shareText, shareUrl);
+                    openShareSheet(post.title != null ? post.title : post.content, BackendAuthApi.resolveUrl(post.linkUrl));
                 });
             }
-
-            @Override
-            public void onError(String message) {
-                runOnUiThread(() -> Toast.makeText(BackendHomeActivity.this, message, Toast.LENGTH_SHORT).show());
-            }
+            @Override public void onError(String message) {}
         });
     }
 
     @Override
     public void onSave(BackendFeedPost post) {
-        BackendAuthApi.savePost(sessionManager.getToken(), post.id, new FeedRefreshCallback(post.savedByViewer ? "Post removed from saved items." : "Post saved."));
+        BackendAuthApi.savePost(sessionManager.getToken(), post.id, new FeedRefreshCallback(post.savedByViewer ? "Unsaved" : "Saved"));
     }
 
-    private void openShareSheet(String shareText, String shareUrl) {
-        String normalizedText = String.valueOf(shareText == null ? "" : shareText).trim();
-        String normalizedUrl = String.valueOf(shareUrl == null ? "" : shareUrl).trim();
-        StringBuilder payload = new StringBuilder();
-        if (!normalizedText.isEmpty()) {
-            payload.append(normalizedText);
-        }
-        if (!normalizedUrl.isEmpty()) {
-            if (payload.length() > 0) {
-                payload.append("\n");
-            }
-            payload.append(normalizedUrl);
-        }
+    @Override
+    public void onAuthorClick(String authorId) {
+        Intent intent = new Intent(this, BackendUserProfileActivity.class);
+        intent.putExtra("userId", authorId);
+        startActivity(intent);
+    }
 
-        if (payload.length() == 0) {
-            payload.append(getString(R.string.app_name));
-        }
-
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, payload.toString());
-        startActivity(Intent.createChooser(shareIntent, "Share post"));
+    private void openShareSheet(String text, String url) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TEXT, text + (url != null ? "\n" + url : ""));
+        startActivity(Intent.createChooser(intent, "Share via"));
     }
 
     private void redirectToLogin() {
         Intent intent = new Intent(this, LoginActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
@@ -363,7 +306,9 @@ public class BackendHomeActivity extends AppCompatActivity implements BackendFee
         @Override
         public void onSuccess(JSONObject responseJson) {
             runOnUiThread(() -> {
-                Toast.makeText(BackendHomeActivity.this, successMessage, Toast.LENGTH_SHORT).show();
+                if (successMessage != null) {
+                    Toast.makeText(BackendHomeActivity.this, successMessage, Toast.LENGTH_SHORT).show();
+                }
                 loadFeed(sessionManager.getToken());
             });
         }

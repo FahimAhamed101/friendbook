@@ -5,45 +5,53 @@ const { toFeedPost, toTimelinePost } = require("../utils/postSerializer");
 const DEFAULT_FEED_SEED = [
   {
     postType: "custom",
-    activityLabel: "created a post",
-    title: "New collaboration thread",
-    content:
-      "I'm opening a new research collaboration thread for field-note exchange, paper review, and discussion scheduling. Share your current focus and availability below.",
+    activityLabel: "is feeling happy",
+    feeling: "happy",
+    location: "New York, USA",
+    title: "Project Milestone Reached!",
+    content: "We just reached our first major milestone for the Myfriend project. Huge thanks to the team! #milestone #success",
     commentsOpen: true,
   },
   {
     postType: "image",
-    activityLabel: "shared a field update",
-    title: "Archive visit notes",
-    content:
-      "Collected primary material from the archive today. The notes are cleaner than expected, and I will turn this into a short methods summary tonight.",
-    displayImageUrl: "https://picsum.photos/id/1040/1200/900",
+    activityLabel: "is traveling",
+    feeling: "Traveling",
+    location: "Paris, France",
+    title: "Postcard from Paris",
+    content: "The Eiffel Tower looks stunning today. #travel #paris",
+    displayImageUrl: "https://picsum.photos/id/1018/1200/900",
     commentsOpen: true,
   },
   {
-    postType: "album",
-    activityLabel: "added an image album",
-    title: "Conference moments",
-    content:
-      "A few snapshots from the last conference roundtable. The discussion on supervision models and interdisciplinary publishing was especially strong.",
-    galleryImages: [
-      "https://picsum.photos/id/1015/1200/900",
-      "https://picsum.photos/id/1016/1200/900",
-      "https://picsum.photos/id/1025/1200/900",
-    ],
-    morePhotosCount: 6,
+    postType: "video",
+    activityLabel: "is watching",
+    feeling: "Watching",
+    location: "Home Cinema",
+    title: "Nature's Beauty",
+    content: "Short clip of the forest nearby. So peaceful.",
+    attachmentUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    attachmentType: "video",
     commentsOpen: true,
   },
   {
-    postType: "link",
-    activityLabel: "shared a link",
-    title: "Draft reading list",
-    content:
-      "This reading list covers recent work on educational leadership, assessment practice, and collaborative supervision models.",
-    linkUrl: "https://example.com/research-reading-list",
-    ctaLabel: "Open link",
+    postType: "bg",
+    activityLabel: "is thinking",
+    feeling: "Thinking",
+    title: "Daily Motivation",
+    content: "What inspires you the most in your daily work? #inspiration",
+    displayImageUrl: "https://picsum.photos/id/1041/1200/900",
     commentsOpen: true,
   },
+  {
+    postType: "audio",
+    activityLabel: "is listening to music",
+    feeling: "Listening",
+    title: "Late night beats",
+    content: "Keeping the energy up for a coding marathon.",
+    attachmentUrl: "http://codeskulptor-demos.commondatastorage.googleapis.com/pang/paws.mp3",
+    attachmentType: "file",
+    commentsOpen: true,
+  }
 ];
 
 async function ensureSeedFeedPostsForUser(userId) {
@@ -62,17 +70,18 @@ async function ensureSeedFeedPostsForUser(userId) {
       author: userId,
       postType: seed.postType,
       activityLabel: seed.activityLabel,
+      feeling: seed.feeling || null,
+      location: seed.location || null,
       title: seed.title,
       content: seed.content,
       displayImageUrl: seed.displayImageUrl || null,
-      galleryImages: seed.galleryImages || [],
-      morePhotosCount: seed.morePhotosCount || 0,
-      linkUrl: seed.linkUrl || null,
-      ctaLabel: seed.ctaLabel || null,
-      audience: "joined-groups",
+      attachmentUrl: seed.attachmentUrl || null,
+      attachmentType: seed.attachmentType || null,
+      audience: "public",
       activityFeed: true,
       myStory: false,
       commentsOpen: seed.commentsOpen === true,
+      viewCount: Math.floor(Math.random() * 500) + 50,
       createdAt: new Date(createdAtBase - index * 60 * 60 * 1000),
       updatedAt: new Date(createdAtBase - index * 60 * 60 * 1000),
     }))
@@ -80,350 +89,34 @@ async function ensureSeedFeedPostsForUser(userId) {
 }
 
 const ALLOWED_AUDIENCES = new Set(["public", "private", "specific-friend", "only-friends", "joined-groups"]);
-const ALLOWED_ATTACHMENT_TYPES = new Set(["image", "video", "file"]);
-const ALLOWED_POST_TYPES = new Set(["custom", "article", "premium", "image", "album", "link", "video", "gif", "audio", "sponsor"]);
-const ALLOWED_REACTION_TYPES = new Set(["like", "love", "haha", "wow", "sad"]);
-const TEMPLATE_RELATIVE_PATTERN = /^(?:\.{0,2}\/)?[\w./-]+\.(?:html?|php|asp|aspx)(?:[?#].*)?$/i;
+const ALLOWED_POST_TYPES = new Set(["custom", "article", "premium", "image", "album", "link", "video", "gif", "audio", "sponsor", "party", "bg"]);
+const ALLOWED_REACTION_TYPES = new Set(["like", "love", "haha", "wow", "sad", "angry"]);
 
 function normalizeOptionalText(value) {
   const normalized = String(value || "").trim();
   return normalized || null;
 }
 
-function normalizeOptionalHref(value, fieldName) {
+function normalizeOptionalHref(value) {
   const normalized = normalizeOptionalText(value);
-  if (!normalized) {
-    return null;
-  }
-
-  if (
-    normalized === "#" ||
-    normalized.startsWith("/") ||
-    normalized.startsWith("./") ||
-    normalized.startsWith("../") ||
-    TEMPLATE_RELATIVE_PATTERN.test(normalized)
-  ) {
-    return normalized;
-  }
-
-  try {
-    return new URL(normalized).toString();
-  } catch {
-    const error = new Error(`${fieldName} must be a valid URL or app path.`);
-    error.statusCode = 400;
-    throw error;
-  }
+  if (!normalized) return null;
+  return normalized;
 }
 
 function normalizeAudience(value) {
   const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized) {
-    return "joined-groups";
-  }
-
-  if (!ALLOWED_AUDIENCES.has(normalized)) {
-    const error = new Error("Audience selection is invalid.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  return normalized;
-}
-
-function normalizeAttachmentType(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized) {
-    return null;
-  }
-
-  if (!ALLOWED_ATTACHMENT_TYPES.has(normalized)) {
-    const error = new Error("Attachment type is invalid.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  return normalized;
-}
-
-function normalizePostType(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized) {
-    return "custom";
-  }
-
-  if (!ALLOWED_POST_TYPES.has(normalized)) {
-    const error = new Error("Post type is invalid.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  return normalized;
-}
-
-function normalizeReactionType(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized || !ALLOWED_REACTION_TYPES.has(normalized)) {
-    const error = new Error("Reaction type is invalid.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  return normalized;
+  if (!normalized) return "public";
+  return ALLOWED_AUDIENCES.has(normalized) ? normalized : "public";
 }
 
 function normalizeBoolean(value, fallback) {
-  if (typeof value === "boolean") {
-    return value;
-  }
-
+  if (typeof value === "boolean") return value;
   if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true") {
-      return true;
-    }
-
-    if (normalized === "false") {
-      return false;
-    }
+    const n = value.trim().toLowerCase();
+    if (n === "true") return true;
+    if (n === "false") return false;
   }
-
   return fallback;
-}
-
-function normalizeScheduledFor(value) {
-  const normalized = normalizeOptionalText(value);
-  if (!normalized) {
-    return null;
-  }
-
-  const parsed = new Date(normalized);
-  if (Number.isNaN(parsed.getTime())) {
-    const error = new Error("Schedule date is invalid.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  return parsed;
-}
-
-function normalizeNonNegativeInteger(value, fallback = 0) {
-  if (value == null || value === "") {
-    return fallback;
-  }
-
-  const parsed = Number.parseInt(String(value), 10);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    const error = new Error("A numeric value is invalid.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  return parsed;
-}
-
-function normalizeHrefList(value, fieldName) {
-  if (value == null || value === "") {
-    return [];
-  }
-
-  const entries = Array.isArray(value) ? value : [value];
-
-  return entries
-    .map((entry) => normalizeOptionalHref(entry, fieldName))
-    .filter(Boolean)
-    .slice(0, 10);
-}
-
-function normalizeAudioSources(value, fallbackUrl, fallbackMimeType) {
-  const normalizedEntries = [];
-  const entries = Array.isArray(value) ? value : value ? [value] : [];
-
-  entries.forEach((entry) => {
-    if (typeof entry === "string") {
-      const url = normalizeOptionalHref(entry, "Audio source URL");
-      if (url) {
-        normalizedEntries.push({ url, mimeType: null });
-      }
-
-      return;
-    }
-
-    if (!entry || typeof entry !== "object") {
-      return;
-    }
-
-    const url = normalizeOptionalHref(entry.url, "Audio source URL");
-    const mimeType = normalizeOptionalText(entry.mimeType);
-    if (url) {
-      normalizedEntries.push({ url, mimeType });
-    }
-  });
-
-  if (normalizedEntries.length > 0) {
-    return normalizedEntries.slice(0, 4);
-  }
-
-  const fallbackNormalizedUrl = normalizeOptionalHref(fallbackUrl, "Audio source URL");
-  if (!fallbackNormalizedUrl) {
-    return [];
-  }
-
-  return [
-    {
-      url: fallbackNormalizedUrl,
-      mimeType: normalizeOptionalText(fallbackMimeType),
-    },
-  ];
-}
-
-function normalizeSponsorItems(value) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") {
-        return null;
-      }
-
-      const title = normalizeOptionalText(item.title);
-      if (!title) {
-        return null;
-      }
-
-      return {
-        title,
-        imageUrl: normalizeOptionalHref(item.imageUrl || item.image, "Sponsor image URL"),
-        priceLabel: normalizeOptionalText(item.priceLabel || item.price),
-        href: normalizeOptionalHref(item.href, "Sponsor item URL"),
-        ctaLabel: normalizeOptionalText(item.ctaLabel) || "Shop Now",
-        shareLabel: normalizeOptionalText(item.shareLabel),
-        likeLabel: normalizeOptionalText(item.likeLabel),
-      };
-    })
-    .filter(Boolean)
-    .slice(0, 12);
-}
-
-function hasRenderableContent(payload) {
-  return Boolean(
-    payload.title ||
-      payload.content ||
-      payload.linkUrl ||
-      payload.attachmentUrl ||
-      payload.displayImageUrl ||
-      payload.galleryImages.length > 0 ||
-      payload.audioSources.length > 0 ||
-      payload.gifPreviewUrl ||
-      payload.gifDataUrl ||
-      payload.sponsorItems.length > 0
-  );
-}
-
-function canUserViewPost(post, userId) {
-  if (!post) {
-    return false;
-  }
-
-  if (String(post.audience || "").trim().toLowerCase() !== "private") {
-    return true;
-  }
-
-  const authorId =
-    post.author && typeof post.author === "object" && post.author._id
-      ? String(post.author._id)
-      : String(post.author || "");
-
-  return authorId === userId;
-}
-
-async function findPostForViewer(postId, userId) {
-  const normalizedPostId = String(postId || "").trim();
-  if (!mongoose.Types.ObjectId.isValid(normalizedPostId)) {
-    return null;
-  }
-
-  const post = await Post.findById(postId)
-    .populate("author")
-    .populate("comments.user");
-
-  if (!post || !canUserViewPost(post, userId)) {
-    return null;
-  }
-
-  return post;
-}
-
-function getReactionUserId(reaction) {
-  if (reaction?.user && typeof reaction.user === "object" && reaction.user._id) {
-    return String(reaction.user._id);
-  }
-
-  return String(reaction?.user || "").trim();
-}
-
-function getMutableReactions(post) {
-  if (Array.isArray(post.reactions) && post.reactions.length > 0) {
-    return post.reactions;
-  }
-
-  post.reactions = Array.isArray(post.likes)
-    ? post.likes
-        .map((userId) => {
-          const normalizedUserId = String(userId || "").trim();
-          if (!normalizedUserId) {
-            return null;
-          }
-
-          return {
-            user: userId,
-            type: "like",
-          };
-        })
-        .filter(Boolean)
-    : [];
-
-  return post.reactions;
-}
-
-function normalizeReactionUserId(value) {
-  const normalized = String(value || "").trim();
-  if (!normalized || !mongoose.Types.ObjectId.isValid(normalized)) {
-    return null;
-  }
-
-  return normalized;
-}
-
-function sanitizePostReactions(post) {
-  const sourceReactions = getMutableReactions(post);
-  const sanitizedReactions = [];
-  const seenUsers = new Set();
-
-  sourceReactions.forEach((reaction) => {
-    const userId = normalizeReactionUserId(getReactionUserId(reaction));
-    const type = String(reaction?.type || "").trim().toLowerCase();
-
-    if (!userId || !ALLOWED_REACTION_TYPES.has(type) || seenUsers.has(userId)) {
-      return;
-    }
-
-    seenUsers.add(userId);
-    sanitizedReactions.push({
-      user: new mongoose.Types.ObjectId(userId),
-      type,
-    });
-  });
-
-  post.reactions = sanitizedReactions;
-}
-
-function syncLegacyLikes(post) {
-  const reactions = Array.isArray(post.reactions) ? post.reactions : [];
-  post.likes = reactions
-    .filter((reaction) => String(reaction?.type || "").trim().toLowerCase() === "like")
-    .map((reaction) => reaction.user);
 }
 
 async function getFeedPosts(req, res, next) {
@@ -442,7 +135,6 @@ async function getFeedPosts(req, res, next) {
       await ensureSeedFeedPostsForUser(req.user._id);
       posts = await Post.find({
         activityFeed: true,
-        $or: [{ scheduledFor: null }, { scheduledFor: { $lte: now } }],
       })
         .populate("author")
         .populate("comments.user")
@@ -450,9 +142,7 @@ async function getFeedPosts(req, res, next) {
         .limit(50);
     }
 
-    const visiblePosts = posts
-      .filter((post) => canUserViewPost(post, String(req.user._id)))
-      .map((post) => toFeedPost(post, req.user._id));
+    const visiblePosts = posts.map((post) => toFeedPost(post, req.user._id));
 
     res.status(200).json({
       message: "Feed loaded successfully.",
@@ -465,84 +155,32 @@ async function getFeedPosts(req, res, next) {
 
 async function createPost(req, res, next) {
   try {
-    const attachmentUrl = normalizeOptionalHref(req.body.attachmentUrl, "Attachment URL");
-    const attachmentType = normalizeAttachmentType(req.body.attachmentType);
     const payload = {
-      postType: normalizePostType(req.body.postType || req.body.type),
-      activityLabel: normalizeOptionalText(req.body.activityLabel || req.body.activity),
+      author: req.user._id,
+      postType: req.body.postType || "custom",
+      activityLabel: normalizeOptionalText(req.body.activityLabel),
       title: normalizeOptionalText(req.body.title),
-      content: normalizeOptionalText(req.body.content || req.body.description) || "",
-      attachmentUrl,
-      attachmentType,
-      attachmentName: normalizeOptionalText(req.body.attachmentName),
-      displayImageUrl: normalizeOptionalHref(req.body.displayImageUrl || req.body.image, "Image URL"),
-      galleryImages: normalizeHrefList(req.body.galleryImages || req.body.images, "Gallery image URL"),
-      morePhotosCount: normalizeNonNegativeInteger(req.body.morePhotosCount, 0),
-      linkUrl: normalizeOptionalHref(req.body.linkUrl || req.body.href, "Link URL"),
+      content: normalizeOptionalText(req.body.content) || "",
+      feeling: normalizeOptionalText(req.body.feeling),
+      location: normalizeOptionalText(req.body.location),
+      attachmentUrl: normalizeOptionalHref(req.body.attachmentUrl),
+      attachmentType: req.body.attachmentType,
+      displayImageUrl: normalizeOptionalHref(req.body.displayImageUrl),
+      linkUrl: normalizeOptionalHref(req.body.linkUrl),
       ctaLabel: normalizeOptionalText(req.body.ctaLabel),
-      ctaHref: normalizeOptionalHref(req.body.ctaHref, "Call to action URL"),
-      fetchedImageLabel: normalizeOptionalText(req.body.fetchedImageLabel),
-      gifPreviewUrl: normalizeOptionalHref(req.body.gifPreviewUrl || req.body.gifPreview, "GIF preview URL"),
-      gifDataUrl: normalizeOptionalHref(req.body.gifDataUrl, "GIF data URL"),
-      audioSources: normalizeAudioSources(
-        req.body.audioSources,
-        req.body.audioUrl || (attachmentType === "file" ? attachmentUrl : null),
-        req.body.audioMimeType
-      ),
-      sponsorItems: normalizeSponsorItems(req.body.sponsorItems),
-      audience: normalizeAudience(req.body.audience),
+      commentsOpen: normalizeBoolean(req.body.commentsOpen, true),
       activityFeed: normalizeBoolean(req.body.activityFeed, true),
-      myStory: normalizeBoolean(req.body.myStory, true),
-      commentsOpen: normalizeBoolean(req.body.commentsOpen, false),
-      scheduledFor: normalizeScheduledFor(req.body.scheduledFor),
+      myStory: normalizeBoolean(req.body.myStory, false),
+      audience: normalizeAudience(req.body.audience),
+      viewCount: 0
     };
 
-    if (!hasRenderableContent(payload)) {
-      res.status(400).json({
-        message: "Add a title, write something, attach media, or provide variant content before publishing.",
-      });
-      return;
-    }
-
-    if (payload.attachmentUrl && !payload.attachmentType) {
-      res.status(400).json({ message: "Attachment type is required when an attachment URL is provided." });
-      return;
-    }
-
-    const createdPost = await Post.create({
-      author: req.user._id,
-      postType: payload.postType,
-      activityLabel: payload.activityLabel,
-      title: payload.title,
-      content: payload.content,
-      attachmentUrl: payload.attachmentUrl,
-      attachmentType: payload.attachmentType,
-      attachmentName: payload.attachmentName,
-      displayImageUrl: payload.displayImageUrl,
-      galleryImages: payload.galleryImages,
-      morePhotosCount: payload.morePhotosCount,
-      linkUrl: payload.linkUrl,
-      ctaLabel: payload.ctaLabel,
-      ctaHref: payload.ctaHref,
-      fetchedImageLabel: payload.fetchedImageLabel,
-      gifPreviewUrl: payload.gifPreviewUrl,
-      gifDataUrl: payload.gifDataUrl,
-      audioSources: payload.audioSources,
-      sponsorItems: payload.sponsorItems,
-      audience: payload.audience,
-      activityFeed: payload.activityFeed,
-      myStory: payload.myStory,
-      commentsOpen: payload.commentsOpen,
-      scheduledFor: payload.scheduledFor,
-    });
-
+    const createdPost = await Post.create(payload);
     const post = await Post.findById(createdPost._id).populate("author");
-    const feedPost = toFeedPost(post, req.user._id);
 
     res.status(201).json({
-      message: feedPost.status === "scheduled" ? "Post scheduled successfully." : "Post published successfully.",
-      post: feedPost,
-      timelinePost: toTimelinePost(post, req.user._id),
+      message: "Post published successfully.",
+      post: toFeedPost(post, req.user._id),
     });
   } catch (error) {
     next(error);
@@ -551,11 +189,17 @@ async function createPost(req, res, next) {
 
 async function getPostById(req, res, next) {
   try {
-    const post = await findPostForViewer(req.params.postId, String(req.user._id));
+    const post = await Post.findById(req.params.postId)
+      .populate("author")
+      .populate("comments.user");
+
     if (!post) {
       res.status(404).json({ message: "Post not found." });
       return;
     }
+
+    post.viewCount = (post.viewCount || 0) + 1;
+    await post.save();
 
     res.status(200).json({
       message: "Post loaded successfully.",
@@ -568,64 +212,51 @@ async function getPostById(req, res, next) {
 
 async function reactToPost(req, res, next) {
   try {
-    const post = await findPostForViewer(req.params.postId, String(req.user._id));
+    const post = await Post.findById(req.params.postId);
     if (!post) {
       res.status(404).json({ message: "Post not found." });
       return;
     }
 
-    const reactionType = normalizeReactionType(req.body.reactionType);
-    const viewerId = String(req.user._id);
-    sanitizePostReactions(post);
-    const reactions = getMutableReactions(post);
-    const existingReactionIndex = reactions.findIndex(
-      (reaction) => getReactionUserId(reaction) === viewerId
-    );
-    const existingReaction =
-      existingReactionIndex >= 0 ? String(reactions[existingReactionIndex]?.type || "").trim().toLowerCase() : null;
-    let message = "Reaction saved.";
+    const reactionType = String(req.body.reactionType || req.body.type || "like").toLowerCase();
+    if (!ALLOWED_REACTION_TYPES.has(reactionType)) {
+      res.status(400).json({ message: "Invalid reaction type." });
+      return;
+    }
 
-    if (existingReactionIndex >= 0 && existingReaction === reactionType) {
-      post.reactions.splice(existingReactionIndex, 1);
-      message = "Reaction removed.";
-    } else if (existingReactionIndex >= 0) {
-      post.reactions[existingReactionIndex].type = reactionType;
-      message = "Reaction updated.";
+    const viewerId = String(req.user._id);
+    const existingReactionIndex = post.reactions.findIndex(
+      (reaction) => String(reaction.user) === viewerId
+    );
+
+    if (existingReactionIndex >= 0) {
+      if (post.reactions[existingReactionIndex].type === reactionType) {
+        post.reactions.splice(existingReactionIndex, 1);
+      } else {
+        post.reactions[existingReactionIndex].type = reactionType;
+      }
     } else {
       post.reactions.push({
         user: req.user._id,
         type: reactionType,
       });
-      message = "Reaction added.";
     }
 
-    syncLegacyLikes(post);
-
     await post.save();
-    await post.populate("author");
-    await post.populate("comments.user");
+    const updatedPost = await Post.findById(post._id).populate("author").populate("comments.user");
 
     res.status(200).json({
-      message,
-      post: toFeedPost(post, req.user._id),
+      message: "Reaction saved.",
+      post: toFeedPost(updatedPost, req.user._id),
     });
   } catch (error) {
     next(error);
   }
 }
 
-async function togglePostLike(req, res, next) {
-  req.body = {
-    ...req.body,
-    reactionType: "like",
-  };
-
-  return reactToPost(req, res, next);
-}
-
 async function addPostComment(req, res, next) {
   try {
-    const post = await findPostForViewer(req.params.postId, String(req.user._id));
+    const post = await Post.findById(req.params.postId);
     if (!post) {
       res.status(404).json({ message: "Post not found." });
       return;
@@ -643,12 +274,11 @@ async function addPostComment(req, res, next) {
     });
 
     await post.save();
-    await post.populate("author");
-    await post.populate("comments.user");
+    const updatedPost = await Post.findById(post._id).populate("author").populate("comments.user");
 
     res.status(201).json({
       message: "Comment added successfully.",
-      post: toFeedPost(post, req.user._id),
+      post: toFeedPost(updatedPost, req.user._id),
     });
   } catch (error) {
     next(error);
@@ -657,16 +287,14 @@ async function addPostComment(req, res, next) {
 
 async function sharePost(req, res, next) {
   try {
-    const post = await findPostForViewer(req.params.postId, String(req.user._id));
+    const post = await Post.findById(req.params.postId);
     if (!post) {
       res.status(404).json({ message: "Post not found." });
       return;
     }
 
-    post.shareCount += 1;
+    post.shareCount = (post.shareCount || 0) + 1;
     await post.save();
-    await post.populate("author");
-    await post.populate("comments.user");
 
     res.status(200).json({
       message: "Post shared successfully.",
@@ -679,34 +307,28 @@ async function sharePost(req, res, next) {
 
 async function toggleSavedPost(req, res, next) {
   try {
-    const post = await findPostForViewer(req.params.postId, String(req.user._id));
+    const post = await Post.findById(req.params.postId);
     if (!post) {
       res.status(404).json({ message: "Post not found." });
       return;
     }
 
     const viewerId = String(req.user._id);
-    const savedByIds = Array.isArray(post.savedBy)
-      ? post.savedBy.map((entry) =>
-          entry && typeof entry === "object" && entry._id ? String(entry._id) : String(entry || "")
-        )
-      : [];
+    const savedByIds = post.savedBy.map(id => String(id));
     const isSaved = savedByIds.includes(viewerId);
 
     if (isSaved) {
-      post.savedBy = savedByIds.filter((userId) => userId !== viewerId);
+      post.savedBy = post.savedBy.filter((userId) => String(userId) !== viewerId);
     } else {
-      post.savedBy = [...savedByIds, viewerId];
+      post.savedBy.push(req.user._id);
     }
 
     await post.save();
-    await post.populate("author");
-    await post.populate("comments.user");
+    const updatedPost = await Post.findById(post._id).populate("author").populate("comments.user");
 
     res.status(200).json({
       message: isSaved ? "Post removed from saved items." : "Post saved successfully.",
-      post: toFeedPost(post, req.user._id),
-      isSaved: !isSaved,
+      post: toFeedPost(updatedPost, req.user._id),
     });
   } catch (error) {
     next(error);
@@ -715,14 +337,10 @@ async function toggleSavedPost(req, res, next) {
 
 async function getSavedPosts(req, res, next) {
   try {
-    const now = new Date();
-    const posts = await Post.find({
-      savedBy: req.user._id,
-      $or: [{ scheduledFor: null }, { scheduledFor: { $lte: now } }],
-    })
+    const posts = await Post.find({ savedBy: req.user._id })
       .populate("author")
       .populate("comments.user")
-      .sort({ updatedAt: -1, createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .limit(50);
 
     res.status(200).json({
@@ -739,7 +357,6 @@ module.exports = {
   getPostById,
   createPost,
   reactToPost,
-  togglePostLike,
   addPostComment,
   sharePost,
   toggleSavedPost,

@@ -1,58 +1,203 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="?attr/backgroundcolor"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:background="?attr/layoutcolor"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/searchBack"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Back"
-            android:textColor="@color/colorPrimary"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:padding="8dp">
 
-        <EditText
-            android:id="@+id/searchInput"
-            android:layout_width="0dp"
+            <ImageView
+                android:id="@+id/searchBack"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/circle"
+                android:backgroundTint="?attr/backgroundcolor"
+                android:padding="5dp"
+                android:src="@drawable/ic_back"
+                app:tint="#596C84" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="35dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_weight="1"
+                android:background="@drawable/btn_round"
+                android:backgroundTint="?attr/backgroundcolor"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="#596C84" />
+
+                <EditText
+                    android:id="@+id/searchInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:fontFamily="@font/bold_roboto"
+                    android:hint="@string/search"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:textColor="?attr/textcolor"
+                    android:textColorHint="?attr/texttwocolor"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:background="#F3F6FB"
-            android:hint="Search..."
-            android:padding="12dp" />
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp">
+
+                <TextView
+                    android:id="@+id/categoryAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/btn_round"
+                    android:backgroundTint="@color/colorPrimary"
+                    android:fontFamily="@font/bold_roboto"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="8dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="8dp"
+                    android:text="All"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/categoryPeople"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/btn_round"
+                    android:backgroundTint="?attr/backgroundcolor"
+                    android:fontFamily="@font/bold_roboto"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="8dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="8dp"
+                    android:text="People"
+                    android:textColor="?attr/texttwocolor"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/categoryPosts"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/btn_round"
+                    android:backgroundTint="?attr/backgroundcolor"
+                    android:fontFamily="@font/bold_roboto"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="8dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="8dp"
+                    android:text="Posts"
+                    android:textColor="?attr/texttwocolor"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/categoryImages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/btn_round"
+                    android:backgroundTint="?attr/backgroundcolor"
+                    android:fontFamily="@font/bold_roboto"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="8dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="8dp"
+                    android:text="Images"
+                    android:textColor="?attr/texttwocolor"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/categoryVideos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/btn_round"
+                    android:backgroundTint="?attr/backgroundcolor"
+                    android:fontFamily="@font/bold_roboto"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="8dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="8dp"
+                    android:text="Videos"
+                    android:textColor="?attr/texttwocolor"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
     </LinearLayout>
 
     <ProgressBar
         android:id="@+id/searchProgressBar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="14dp" />
-
-    <TextView
-        android:id="@+id/searchEmpty"
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:gravity="center"
-        android:text="No results found."
-        android:textColor="#5E6D8A"
-        android:visibility="gone" />
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="#1877F2" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/searchRecyclerView"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="16dp" />
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/searchRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:padding="8dp" />
+
+            <TextView
+                android:id="@+id/searchEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="50dp"
+                android:alpha="0.5"
+                android:fontFamily="@font/bold_roboto"
+                android:gravity="center"
+                android:text="@string/nothing_found"
+                android:textColor="?attr/texttwocolor"
+                android:textSize="20sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
 </LinearLayout>

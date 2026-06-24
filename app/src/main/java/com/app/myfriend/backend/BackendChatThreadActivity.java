@@ -1,21 +1,27 @@
 package com.app.myfriend.backend;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.myfriend.R;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class BackendChatThreadActivity extends AppCompatActivity {
 
@@ -29,6 +35,11 @@ public class BackendChatThreadActivity extends AppCompatActivity {
     private String viewerId;
     private RecyclerView recyclerView;
 
+    private CircleImageView avatarView;
+    private TextView titleView;
+    private TextView statusView;
+    private ImageView onlineIndicator;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,19 +50,61 @@ public class BackendChatThreadActivity extends AppCompatActivity {
         emptyView = findViewById(R.id.chatThreadEmpty);
         inputView = findViewById(R.id.chatThreadInput);
         recyclerView = findViewById(R.id.chatThreadRecyclerView);
+
+        avatarView = findViewById(R.id.chatThreadAvatar);
+        titleView = findViewById(R.id.chatThreadTitle);
+        statusView = findViewById(R.id.chatThreadStatus);
+        onlineIndicator = findViewById(R.id.chatThreadOnlineIndicator);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         messageAdapter = new BackendMessageAdapter();
         recyclerView.setAdapter(messageAdapter);
 
         conversationId = getIntent().getStringExtra("conversationId");
         recipientId = getIntent().getStringExtra("recipientId");
+        String initialTitle = getIntent().getStringExtra("title");
+        String initialAvatar = getIntent().getStringExtra("avatar");
+
+        titleView.setText(initialTitle != null ? initialTitle : "Chat");
+        if (initialAvatar != null && !initialAvatar.isEmpty()) {
+            Picasso.get().load(BackendAuthApi.resolveUrl(initialAvatar)).placeholder(R.drawable.avatar).into(avatarView);
+        }
+
         viewerId = sessionManager.getUser() != null ? sessionManager.getUser().optString("id", "") : "";
 
-        ((TextView) findViewById(R.id.chatThreadTitle)).setText(getIntent().getStringExtra("title"));
         findViewById(R.id.chatThreadBack).setOnClickListener(v -> finish());
         findViewById(R.id.chatThreadSend).setOnClickListener(v -> sendMessage());
 
+        findViewById(R.id.chatThreadAudioCall).setOnClickListener(v -> Toast.makeText(this, "Audio call coming soon", Toast.LENGTH_SHORT).show());
+        findViewById(R.id.chatThreadVideoCall).setOnClickListener(v -> Toast.makeText(this, "Video call coming soon", Toast.LENGTH_SHORT).show());
+
         loadMessages();
+        loadRecipientProfile();
+    }
+
+    private void loadRecipientProfile() {
+        if (recipientId == null || recipientId.isEmpty()) return;
+
+        BackendAuthApi.getProfileById(sessionManager.getToken(), recipientId, new BackendAuthApi.AuthCallback() {
+            @Override
+            public void onSuccess(JSONObject responseJson) {
+                runOnUiThread(() -> {
+                    JSONObject profile = responseJson.optJSONObject("profile");
+                    if (profile != null) {
+                        titleView.setText(profile.optString("fullName", titleView.getText().toString()));
+                        String avatarUrl = BackendAuthApi.resolveUrl(profile.optString("avatarUrl", ""));
+                        if (!avatarUrl.isEmpty()) {
+                            Picasso.get().load(avatarUrl).placeholder(R.drawable.avatar).into(avatarView);
+                        }
+                        statusView.setText("Active now");
+                        onlineIndicator.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {}
+        });
     }
 
     private void loadMessages() {
@@ -62,28 +115,31 @@ public class BackendChatThreadActivity extends AppCompatActivity {
         }
 
         progressBar.setVisibility(View.VISIBLE);
-        String resolvedConversationId = conversationId == null || conversationId.trim().isEmpty() ? "new" : conversationId;
+        String resolvedConversationId = (conversationId == null || conversationId.trim().isEmpty() || "null".equals(conversationId)) ? "new" : conversationId;
+
         BackendAuthApi.getConversationMessages(token, resolvedConversationId, recipientId, new BackendAuthApi.AuthCallback() {
             @Override
             public void onSuccess(JSONObject responseJson) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    conversationId = responseJson.optString("conversationId", conversationId == null ? "" : conversationId);
+                    String newConvId = responseJson.optString("conversationId", "");
+                    if (!newConvId.isEmpty()) {
+                        conversationId = newConvId;
+                    }
+
                     JSONArray data = responseJson.optJSONArray("data");
                     List<BackendMessageItem> items = new ArrayList<>();
                     if (data != null) {
                         for (int i = 0; i < data.length(); i++) {
                             JSONObject message = data.optJSONObject(i);
-                            if (message == null) {
-                                continue;
-                            }
-                            String senderId = message.optString("senderId", "");
+                            if (message == null) continue;
+                            String sId = message.optString("senderId", "");
                             items.add(new BackendMessageItem(
                                     message.optString("id", ""),
-                                    senderId,
+                                    sId,
                                     message.optString("content", ""),
                                     message.optString("createdAt", ""),
-                                    senderId.equals(viewerId)
+                                    sId.equals(viewerId)
                             ));
                         }
                     }
@@ -92,15 +148,11 @@ public class BackendChatThreadActivity extends AppCompatActivity {
                     if (!items.isEmpty()) {
                         recyclerView.scrollToPosition(items.size() - 1);
                     }
-                    if (conversationId != null && !conversationId.trim().isEmpty()) {
-                        BackendAuthApi.markConversationRead(token, conversationId, new BackendAuthApi.AuthCallback() {
-                            @Override
-                            public void onSuccess(JSONObject responseJson) {
-                            }
 
-                            @Override
-                            public void onError(String message) {
-                            }
+                    if (conversationId != null && !conversationId.isEmpty() && !"null".equals(conversationId)) {
+                        BackendAuthApi.markConversationRead(token, conversationId, new BackendAuthApi.AuthCallback() {
+                            @Override public void onSuccess(JSONObject responseJson) {}
+                            @Override public void onError(String message) {}
                         });
                     }
                 });
@@ -119,19 +171,17 @@ public class BackendChatThreadActivity extends AppCompatActivity {
 
     private void sendMessage() {
         String content = inputView.getText().toString().trim();
-        if (content.isEmpty()) {
-            return;
-        }
+        if (content.isEmpty()) return;
 
         String token = sessionManager.getToken();
-        progressBar.setVisibility(View.VISIBLE);
-        String resolvedConversationId = conversationId == null || conversationId.trim().isEmpty() ? "new" : conversationId;
+        String resolvedConversationId = (conversationId == null || conversationId.trim().isEmpty() || "null".equals(conversationId)) ? "new" : conversationId;
+
         BackendAuthApi.sendMessage(token, resolvedConversationId, recipientId, content, new BackendAuthApi.AuthCallback() {
             @Override
             public void onSuccess(JSONObject responseJson) {
                 runOnUiThread(() -> {
                     inputView.setText("");
-                    if (conversationId == null || conversationId.trim().isEmpty()) {
+                    if (conversationId == null || conversationId.trim().isEmpty() || "null".equals(conversationId)) {
                         loadOrCreateConversationIdThenRefresh();
                     } else {
                         loadMessages();
@@ -141,18 +191,13 @@ public class BackendChatThreadActivity extends AppCompatActivity {
 
             @Override
             public void onError(String message) {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    emptyView.setVisibility(View.VISIBLE);
-                    emptyView.setText(message);
-                });
+                runOnUiThread(() -> Toast.makeText(BackendChatThreadActivity.this, message, Toast.LENGTH_SHORT).show());
             }
         });
     }
 
     private void loadOrCreateConversationIdThenRefresh() {
-        String token = sessionManager.getToken();
-        BackendAuthApi.openConversation(token, recipientId, new BackendAuthApi.AuthCallback() {
+        BackendAuthApi.openConversation(sessionManager.getToken(), recipientId, new BackendAuthApi.AuthCallback() {
             @Override
             public void onSuccess(JSONObject responseJson) {
                 runOnUiThread(() -> {
@@ -160,15 +205,7 @@ public class BackendChatThreadActivity extends AppCompatActivity {
                     loadMessages();
                 });
             }
-
-            @Override
-            public void onError(String message) {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    emptyView.setVisibility(View.VISIBLE);
-                    emptyView.setText(message);
-                });
-            }
+            @Override public void onError(String message) {}
         });
     }
 }

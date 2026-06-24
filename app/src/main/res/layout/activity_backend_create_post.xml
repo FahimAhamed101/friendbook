@@ -1,35 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/createPostMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:orientation="vertical">
+    android:background="?attr/layoutcolor">
 
-    <LinearLayout
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/createPostProgressBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#F3F7FE"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="#1877F2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:trackColor="#FF7CB6FF"
+        app:trackCornerRadius="2dp"
+        app:trackThickness="2dp" />
+
+    <ImageView
+        android:id="@+id/createPostBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/circle"
+        android:backgroundTint="?attr/backgroundcolor"
+        android:padding="5dp"
+        android:src="@drawable/ic_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="#596C84" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/bold"
+        android:text="Create Post (Backend)"
+        android:textColor="@color/colorPrimary"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="@+id/createPostBack"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/createPostBack" />
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/createPostAvatar"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:src="@drawable/avatar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createPostBack" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="@+id/createPostAvatar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/createPostAvatar"
+        app:layout_constraintTop_toTopOf="@+id/createPostAvatar">
 
         <TextView
-            android:id="@+id/createPostBack"
+            android:id="@+id/createPostAuthorName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Back"
-            android:textColor="@color/colorPrimary"
-            android:textStyle="bold" />
+            android:fontFamily="@font/bold_roboto"
+            android:textColor="?attr/textcolor"
+            android:textSize="16sp"
+            tools:text="User Name" />
 
-        <TextView
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Create Post"
-            android:textColor="@android:color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/createPostPrivacy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/bold_roboto"
+                android:text="Everyone"
+                android:textColor="?attr/texttwocolor"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/bold_roboto"
+                android:text=" . "
+                android:textColor="?attr/texttwocolor"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/createPostLocationLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/bold_roboto"
+                android:text="Add location"
+                android:textColor="?attr/texttwocolor"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <EditText
@@ -37,119 +113,151 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="16dp"
-        android:background="#F3F6FB"
-        android:hint="Title"
-        android:padding="14dp" />
+        android:background="@null"
+        android:fontFamily="@font/bold"
+        android:hint="Add a catchy title..."
+        android:textColor="?attr/textcolor"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@+id/createPostAvatar" />
 
-    <EditText
+    <com.hendraanggrian.appcompat.widget.SocialEditText
         android:id="@+id/createPostContent"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
-        android:background="#F3F6FB"
-        android:gravity="top|start"
-        android:hint="What's on your mind?"
-        android:inputType="textMultiLine"
-        android:padding="14dp" />
-
-    <EditText
-        android:id="@+id/createPostImageUrl"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="16dp"
-        android:background="#F3F6FB"
-        android:hint="Image URL (optional)"
-        android:padding="14dp" />
+        android:background="@null"
+        android:fontFamily="@font/bold_roboto"
+        android:hint="What's on your mind? #hashtag @mention"
+        android:minHeight="100dp"
+        android:textColor="?attr/textcolor"
+        android:textColorHint="?attr/texttwocolor"
+        android:textSize="15sp"
+        app:hashtagColor="@color/colorPrimary"
+        app:layout_constraintTop_toBottomOf="@+id/createPostTitle"
+        app:mentionColor="@color/colorPrimary"
+        app:socialFlags="hashtag|mention" />
+
+    <RelativeLayout
+        android:id="@+id/createPostMediaPreviewContainer"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/createPostContent">
+
+        <ImageView
+            android:id="@+id/createPostImagePreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/cover" />
+
+        <ImageView
+            android:id="@+id/createPostCancelMedia"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/circle"
+            android:backgroundTint="?attr/backgroundcolor"
+            android:padding="5dp"
+            android:src="@drawable/ic_cancel"
+            app:tint="#596C84" />
+    </RelativeLayout>
 
     <LinearLayout
+        android:id="@+id/createPostTools"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
-        android:orientation="horizontal">
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <Button
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:fontFamily="@font/bold_roboto"
+            android:gravity="center_vertical"
+            android:text="Add to your post"
+            android:textColor="?attr/textcolor"
+            android:textSize="16sp" />
+
+        <ImageView
             android:id="@+id/createPostPickImage"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="6dp"
-            android:layout_weight="1"
-            android:backgroundTint="#EEF4FF"
-            android:text="Pick Image"
-            android:textAllCaps="false"
-            android:textColor="@color/colorPrimary" />
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:padding="3dp"
+            android:src="@drawable/add_photo" />
 
-        <Button
+        <ImageView
             android:id="@+id/createPostPickVideo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:backgroundTint="#EEF4FF"
-            android:text="Pick Video"
-            android:textAllCaps="false"
-            android:textColor="@color/colorPrimary" />
-    </LinearLayout>
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:padding="3dp"
+            android:src="@drawable/add_video" />
 
-    <TextView
-        android:id="@+id/createPostMediaStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="16dp"
-        android:textColor="#5E6D8A"
-        android:visibility="gone" />
+        <ImageView
+            android:id="@+id/createPostFeeling"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="16dp"
+            android:padding="4dp"
+            android:src="@drawable/add_feeling" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/createPostSubmit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:backgroundTint="@color/colorPrimary"
-        android:text="Publish"
-        android:textAllCaps="false"
-        android:textColor="@android:color/white" />
-
-    <ProgressBar
-        android:id="@+id/createPostProgressBar"
-        style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="14dp"
-        android:visibility="gone" />
+        android:layout_height="40dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/btn_round"
+        android:backgroundTint="@color/colorPrimary"
+        android:fontFamily="@font/bold_roboto"
+        android:text="Post"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/createPostTools"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/createPostStatus"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:gravity="center"
-        android:textColor="#5E6D8A"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="8dp"
+        android:textColor="#F44336"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/createPostTools"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="Error message here" />
+
+    <!-- Extra fields for logic but hidden in this layout -->
+    <EditText
+        android:id="@+id/createPostImageUrl"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/createPostMediaStatus"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:visibility="gone" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/backendBottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        app:itemIconTint="@color/selector"
-        app:labelVisibilityMode="unlabeled"
-        app:menu="@menu/bottom_nav"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

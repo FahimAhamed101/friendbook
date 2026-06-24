@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainCommentLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgroundcolor"
+    android:orientation="vertical">
+
+    <!-- Header Section -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginBottom="16dp"
+        android:background="?attr/layoutcolor">
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/commentProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="#1877F2"
+            app:layout_constraintTop_toTopOf="parent"
+            app:trackColor="#FF7CB6FF"
+            app:trackCornerRadius="2dp"
+            app:trackThickness="2dp" />
+
+        <TextView
+            android:id="@+id/commentTopName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/bold_roboto"
+            android:textColor="@color/colorPrimary"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="User's Post" />
+
+        <ImageView
+            android:id="@+id/commentBack"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/circle"
+            android:backgroundTint="?attr/backgroundcolor"
+            android:padding="5dp"
+            android:src="@drawable/ic_back"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#596C84" />
+
+        <ImageView
+            android:id="@+id/commentShare"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/circle"
+            android:backgroundTint="?attr/backgroundcolor"
+            android:padding="6dp"
+            android:src="@drawable/ic_share"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#596C84" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/layoutcolor"
+        android:orientation="vertical">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- The Post Content itself, reusing the same layout style as the feed -->
+                <include
+                    android:id="@+id/commentPostContainer"
+                    layout="@layout/item_backend_feed_post" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:alpha="0.5"
+                    android:background="?attr/texttwocolor" />
+
+                <!-- Comments List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/commentRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Input Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:background="?attr/layoutcolor"
+            android:elevation="5dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <ImageView
+                android:id="@+id/commentAddMedia"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/circle"
+                android:backgroundTint="?attr/backgroundcolor"
+                android:padding="7dp"
+                android:src="@drawable/ic_plus"
+                app:tint="#596C84" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="35dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_weight="1"
+                android:background="@drawable/btn_round"
+                android:backgroundTint="?attr/backgroundcolor"
+                android:orientation="horizontal">
+
+                <com.hendraanggrian.appcompat.widget.SocialEditText
+                    android:id="@+id/commentInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="14dp"
+                    android:layout_marginEnd="14dp"
+                    android:background="@null"
+                    android:fontFamily="@font/bold_roboto"
+                    android:hint="@string/type_a_comment"
+                    android:inputType="textCapSentences"
+                    android:maxLines="3"
+                    android:textColor="?attr/textcolor"
+                    android:textColorHint="?attr/texttwocolor"
+                    android:textSize="14sp"
+                    app:hashtagColor="@color/colorPrimary"
+                    app:mentionColor="@color/colorPrimary"
+                    app:socialFlags="hashtag|mention" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/commentSubmit"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:padding="5dp"
+                android:src="@drawable/ic_send"
+                app:tint="@color/colorPrimary" />
+
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

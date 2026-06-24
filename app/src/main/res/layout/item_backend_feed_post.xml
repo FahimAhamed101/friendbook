@@ -1,178 +1,477 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
-    android:background="@android:color/white"
     android:orientation="vertical">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingTop="14dp"
-        android:paddingEnd="16dp">
-
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/feedAuthorImage"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/avatar" />
+        android:background="?attr/layoutcolor">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:id="@+id/mainContent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/feedAuthorName"
-                android:layout_width="wrap_content"
+            <!-- Header Section -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/black"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
 
-            <TextView
-                android:id="@+id/feedAuthorHandle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="#7A879A"
-                android:textSize="13sp" />
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/feedAuthorImage"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="16dp"
+                    android:src="@drawable/avatar"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:orientation="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/feedMoreButton"
+                    app:layout_constraintStart_toEndOf="@+id/feedAuthorImage"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/feedAuthorName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/bold_roboto"
+                            android:textColor="?attr/textcolor"
+                            android:textSize="16sp"
+                            tools:text="User Name" />
+
+                        <TextView
+                            android:id="@+id/feedActivityLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:fontFamily="@font/bold_roboto"
+                            android:textColor="?attr/textcolor"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/feedAuthorHandle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/bold_roboto"
+                            android:textColor="?attr/texttwocolor"
+                            android:textSize="14sp"
+                            tools:text="@handle" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/bold_roboto"
+                            android:text="  .  "
+                            android:textColor="?attr/texttwocolor"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/feedTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/bold_roboto"
+                            android:textColor="?attr/texttwocolor"
+                            android:textSize="14sp"
+                            tools:text="2h ago" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/feedMoreButton"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="16dp"
+                    android:src="@drawable/ic_more"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="?attr/texttwocolor" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Text Content -->
             <TextView
-                android:id="@+id/feedMeta"
-                android:layout_width="wrap_content"
+                android:id="@+id/feedTitle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
                 android:layout_marginTop="4dp"
-                android:textColor="#7A879A"
-                android:textSize="12sp" />
+                android:layout_marginEnd="24dp"
+                android:fontFamily="@font/bold_roboto"
+                android:textColor="?attr/textcolor"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <com.tylersuehr.socialtextview.SocialTextView
+                android:id="@+id/feedContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="24dp"
+                android:fontFamily="@font/bold_roboto"
+                android:textColor="?attr/textcolor"
+                android:textSize="16sp"
+                app:hashtagColor="@color/colorPrimary"
+                app:mentionColor="@color/colorPrimary"
+                app:urlColor="@color/colorPrimary" />
+
+            <!-- Media Section -->
+            <RelativeLayout
+                android:id="@+id/mediaContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <ImageView
+                    android:id="@+id/feedImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/feedVideoPlayIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_play"
+                    android:visibility="gone" />
+
+                <me.jagar.chatvoiceplayerlibrary.VoicePlayerView
+                    android:id="@+id/feedVoicePlayerView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone"
+                    app:enableVisualizer="false"
+                    app:playPauseBackgroundColor="@color/colorPrimary"
+                    app:playPauseCornerRadius="100"
+                    app:playProgressbarColor="#fff"
+                    app:progressTimeColor="#fff"
+                    app:seekBarProgressColor="#000"
+                    app:seekBarThumbColor="#fff"
+                    app:shareCornerRadius="100"
+                    app:showShareButton="false"
+                    app:showTiming="false"
+                    app:timingBackgroundColor="#FFFFFF"
+                    app:viewBackground="#E1E8ED"
+                    app:viewCornerRadius="100"
+                    app:visualizationNotPlayedColor="@color/colorPrimary"
+                    app:visualizationPlayedColor="@color/colorAccent" />
+
+                <com.tylersuehr.socialtextview.SocialTextView
+                    android:id="@+id/feedBgText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:fontFamily="@font/bold_roboto"
+                    android:gravity="center"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:hashtagColor="@color/colorPrimary"
+                    app:mentionColor="@color/colorPrimary"
+                    app:urlColor="@color/colorPrimary" />
+
+                <TextView
+                    android:id="@+id/feedLinkLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:background="@drawable/btn_round"
+                    android:backgroundTint="@color/colorPrimary"
+                    android:fontFamily="@font/bold_roboto"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+            </RelativeLayout>
+
+            <!-- Stats Section -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="4dp">
+
+                <LinearLayout
+                    android:id="@+id/feedReactionsLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <LinearLayout
+                        android:id="@+id/topReactionsLayout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="14dp"
+                        android:layout_marginEnd="4dp"
+                        android:orientation="horizontal">
+                        <!-- Icons will be shown programmatically -->
+                        <ImageView
+                            android:id="@+id/reactIconLike"
+                            android:layout_width="14dp"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_thumb"
+                            android:visibility="gone" />
+                        <ImageView
+                            android:id="@+id/reactIconLove"
+                            android:layout_width="14dp"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_love"
+                            android:visibility="gone" />
+                        <ImageView
+                            android:id="@+id/reactIconHaha"
+                            android:layout_width="14dp"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_laugh"
+                            android:visibility="gone" />
+                        <ImageView
+                            android:id="@+id/reactIconWow"
+                            android:layout_width="14dp"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_wow"
+                            android:visibility="gone" />
+                        <ImageView
+                            android:id="@+id/reactIconSad"
+                            android:layout_width="14dp"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_sad"
+                            android:visibility="gone" />
+                        <ImageView
+                            android:id="@+id/reactIconAngry"
+                            android:layout_width="14dp"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_angry"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/feedLikeCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/bold_roboto"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="12sp"
+                        tools:text="12" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:text="@string/likes"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:id="@+id/feedCommentCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/bold_roboto"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="12sp"
+                        tools:text="5" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:text="@string/comments"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/feedViewCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="12sp"
+                        tools:text="100" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:text="@string/views"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:alpha="0.5"
+                android:background="?attr/texttwocolor" />
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/feedLikeButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/feedLikeIcon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_like" />
+
+                    <TextView
+                        android:id="@+id/feedLikeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:text="@string/like"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/feedCommentButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_message"
+                        app:tint="?attr/texttwocolor" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:text="@string/comments"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/feedShareButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_share"
+                        app:tint="?attr/texttwocolor" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:text="@string/share"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/feedSaveButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/feedSaveIcon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_save"
+                        app:tint="?attr/texttwocolor" />
+
+                    <TextView
+                        android:id="@+id/feedSaveText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="@font/bold_roboto"
+                        android:text="Save"
+                        android:textColor="?attr/texttwocolor"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/feedTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
-        android:textColor="@android:color/black"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/feedContent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:lineSpacingExtra="3dp"
-        android:textColor="#1C2430"
-        android:textSize="15sp" />
-
-    <TextView
-        android:id="@+id/feedLinkLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/btn_round"
-        android:backgroundTint="#EAF1FF"
-        android:paddingStart="12dp"
-        android:paddingTop="6dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="6dp"
-        android:textColor="@color/colorPrimary"
-        android:textStyle="bold"
-        android:visibility="gone" />
-
-    <ImageView
-        android:id="@+id/feedImage"
-        android:layout_width="match_parent"
-        android:layout_height="240dp"
-        android:layout_marginTop="12dp"
-        android:scaleType="centerCrop"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/feedStats"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
-        android:textColor="#7A879A"
-        android:textSize="13sp" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
-        android:background="#E9EEF6" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="8dp"
-        android:paddingBottom="10dp">
-
-        <Button
-            android:id="@+id/feedLikeButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:backgroundTint="#EAF1FF"
-            android:text="Like"
-            android:textAllCaps="false"
-            android:textColor="@color/colorPrimary" />
-
-        <Button
-            android:id="@+id/feedCommentButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:backgroundTint="#F1F4F9"
-            android:text="Comment"
-            android:textAllCaps="false"
-            android:textColor="#263246" />
-
-        <Button
-            android:id="@+id/feedShareButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:backgroundTint="#F1F4F9"
-            android:text="Share"
-            android:textAllCaps="false"
-            android:textColor="#263246" />
-
-        <Button
-            android:id="@+id/feedSaveButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:backgroundTint="#F1F4F9"
-            android:text="Save"
-            android:textAllCaps="false"
-            android:textColor="#263246" />
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

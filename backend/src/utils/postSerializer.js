@@ -3,8 +3,8 @@ const { getVideoPreview } = require("./videoPreview");
 
 const DEFAULT_AVATAR_URL = "/images/resources/user.jpg";
 const DEFAULT_POST_TYPE = "custom";
-const ALLOWED_POST_TYPES = new Set(["custom", "article", "premium", "image", "album", "link", "video", "gif", "audio", "sponsor"]);
-const REACTION_TYPES = ["like", "love", "haha", "wow", "sad"];
+const ALLOWED_POST_TYPES = new Set(["custom", "article", "premium", "image", "album", "link", "video", "gif", "audio", "sponsor", "party", "bg"]);
+const REACTION_TYPES = ["like", "love", "haha", "wow", "sad", "angry"];
 
 function getAuthorName(user) {
   if (!user) {
@@ -18,6 +18,11 @@ function getAuthorName(user) {
 function getAuthorHandle(user) {
   if (!user) {
     return "@guest";
+  }
+
+  const username = String(user.username || "").trim();
+  if (username) {
+    return `@${username}`;
   }
 
   const emailPrefix = String(user.email || "").split("@")[0]?.trim();
@@ -123,6 +128,10 @@ function getDefaultActivity(postType, isScheduled) {
       return "posted audio";
     case "sponsor":
       return "shared sponsored items";
+    case "party":
+      return "started a watch party";
+    case "bg":
+      return "posted with background";
     default:
       return "created a post";
   }
@@ -276,6 +285,7 @@ function serializePost(post, viewerId) {
       haha: 0,
       wow: 0,
       sad: 0,
+      angry: 0,
     }
   );
   const topReactions = REACTION_TYPES
@@ -310,6 +320,8 @@ function serializePost(post, viewerId) {
     authorHandle: getAuthorHandle(author),
     authorImage: String(author?.avatarUrl || DEFAULT_AVATAR_URL).trim() || DEFAULT_AVATAR_URL,
     activity: String(post?.activityLabel || "").trim() || getDefaultActivity(postType, isScheduled),
+    feeling: String(post?.feeling || "").trim() || null,
+    location: String(post?.location || "").trim() || null,
     published: formatPublishedDate(publishedAt),
     title,
     content: description,
@@ -340,7 +352,7 @@ function serializePost(post, viewerId) {
     videoUrl,
     comments: serializedComments,
     stats: {
-      viewCount: Math.max(1, likeCount + commentCount + shareCount + 1),
+      viewCount: Number(post?.viewCount || 0) || Math.max(1, likeCount + commentCount + shareCount + 1),
       likeCount,
       commentCount,
       shareCount,

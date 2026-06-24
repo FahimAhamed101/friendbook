@@ -80,6 +80,10 @@ public class BackendAuthApi {
         get("/posts/saved", token, callback);
     }
 
+    public static void getPostById(String token, String postId, AuthCallback callback) {
+        get("/posts/" + postId, token, callback);
+    }
+
     public static void createPost(String token, JSONObject payload, AuthCallback callback) {
         post("/posts", token, payload, callback);
     }
@@ -110,6 +114,17 @@ public class BackendAuthApi {
 
     public static void likePost(String token, String postId, AuthCallback callback) {
         post("/posts/" + postId + "/like", token, new JSONObject(), callback);
+    }
+
+    public static void reactToPost(String token, String postId, String reactionType, AuthCallback callback) {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("reactionType", reactionType);
+        } catch (JSONException e) {
+            callback.onError("Could not prepare reaction.");
+            return;
+        }
+        post("/posts/" + postId + "/reactions", token, payload, callback);
     }
 
     public static void sharePost(String token, String postId, AuthCallback callback) {

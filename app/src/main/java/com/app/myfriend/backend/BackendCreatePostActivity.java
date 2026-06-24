@@ -6,18 +6,24 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.app.myfriend.R;
 import com.app.myfriend.reel.VideoEditActivity;
 import com.app.myfriend.send.ImageEditingActivity;
+import com.hendraanggrian.appcompat.widget.SocialEditText;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class BackendCreatePostActivity extends AppCompatActivity {
 
@@ -29,13 +35,17 @@ public class BackendCreatePostActivity extends AppCompatActivity {
     private BackendSessionManager sessionManager;
     private View progressBar;
     private EditText titleInput;
-    private EditText contentInput;
-    private EditText imageInput;
-    private TextView mediaStatusView;
-    private Button pickImageButton;
-    private Button pickVideoButton;
+    private SocialEditText contentInput;
+    private TextView locationLabel;
+    private ImageView imagePreview;
+    private View mediaPreviewContainer;
+    private CircleImageView avatarView;
+    private TextView authorNameView;
+
     private Uri pendingMediaUri;
     private String pendingMediaType = "";
+    private String selectedFeeling = "";
+    private String selectedLocation = "";
     private String initialPostType = "custom";
 
     @Override
@@ -47,42 +57,73 @@ public class BackendCreatePostActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.createPostProgressBar);
         titleInput = findViewById(R.id.createPostTitle);
         contentInput = findViewById(R.id.createPostContent);
-        imageInput = findViewById(R.id.createPostImageUrl);
-        mediaStatusView = findViewById(R.id.createPostMediaStatus);
-        pickImageButton = findViewById(R.id.createPostPickImage);
-        pickVideoButton = findViewById(R.id.createPostPickVideo);
+        locationLabel = findViewById(R.id.createPostLocationLabel);
+        imagePreview = findViewById(R.id.createPostImagePreview);
+        mediaPreviewContainer = findViewById(R.id.createPostMediaPreviewContainer);
+        avatarView = findViewById(R.id.createPostAvatar);
+        authorNameView = findViewById(R.id.createPostAuthorName);
+
         initialPostType = String.valueOf(getIntent().getStringExtra("initial_post_type")).trim().toLowerCase();
         if (initialPostType.isEmpty() || "null".equals(initialPostType)) {
             initialPostType = "custom";
         }
 
+        setupUserHeader();
+
         findViewById(R.id.createPostBack).setOnClickListener(v -> finish());
         findViewById(R.id.createPostSubmit).setOnClickListener(v -> submitPost());
-        pickImageButton.setOnClickListener(v -> openPicker("image/*", REQUEST_PICK_IMAGE));
-        pickVideoButton.setOnClickListener(v -> openPicker("video/*", REQUEST_PICK_VIDEO));
+        findViewById(R.id.createPostPickImage).setOnClickListener(v -> openPicker("image/*", REQUEST_PICK_IMAGE));
+        findViewById(R.id.createPostPickVideo).setOnClickListener(v -> openPicker("video/*", REQUEST_PICK_VIDEO));
+        findViewById(R.id.createPostCancelMedia).setOnClickListener(v -> clearMedia());
+        findViewById(R.id.createPostFeeling).setOnClickListener(v -> showFeelingDialog());
+        findViewById(R.id.createPostLocationLabel).setOnClickListener(v -> showLocationDialog());
 
-        BackendNavigationHelper.setup(this, R.id.nav_add);
         applyComposerPreset();
+    }
+
+    private void setupUserHeader() {
+        JSONObject user = sessionManager.getUser();
+        if (user != null) {
+            String firstName = user.optString("firstName", "");
+            String lastName = user.optString("lastName", "");
+            authorNameView.setText(firstName + " " + lastName);
+            String avatarUrl = BackendAuthApi.resolveUrl(user.optString("avatarUrl", ""));
+            if (!avatarUrl.isEmpty()) {
+                Picasso.get().load(avatarUrl).placeholder(R.drawable.avatar).into(avatarView);
+            }
+        }
+    }
+
+    private void showFeelingDialog() {
+        String[] feelings = {"Happy", "Loved", "Sad", "Angry", "Excited", "Tired", "Blessed"};
+        new AlertDialog.Builder(this)
+                .setTitle("How are you feeling?")
+                .setItems(feelings, (dialog, which) -> {
+                    selectedFeeling = feelings[which];
+                    Toast.makeText(this, "Feeling " + selectedFeeling, Toast.LENGTH_SHORT).show();
+                }).show();
+    }
+
+    private void showLocationDialog() {
+        EditText input = new EditText(this);
+        input.setHint("Enter location");
+        new AlertDialog.Builder(this)
+                .setTitle("Add Location")
+                .setView(input)
+                .setPositiveButton("Add", (dialog, which) -> {
+                    selectedLocation = input.getText().toString().trim();
+                    locationLabel.setText(selectedLocation.isEmpty() ? "Add location" : selectedLocation);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void applyComposerPreset() {
         if ("image".equals(initialPostType)) {
-            mediaStatusView.setVisibility(View.VISIBLE);
-            mediaStatusView.setText("Choose an image to publish to the backend feed.");
-            imageInput.setHint("Image URL or pick an image below");
-            titleInput.post(() -> openPicker("image/*", REQUEST_PICK_IMAGE));
-            return;
+            openPicker("image/*", REQUEST_PICK_IMAGE);
+        } else if ("video".equals(initialPostType)) {
+            openPicker("video/*", REQUEST_PICK_VIDEO);
         }
-
-        if ("video".equals(initialPostType)) {
-            mediaStatusView.setVisibility(View.VISIBLE);
-            mediaStatusView.setText("Choose a video to publish to the backend feed.");
-            imageInput.setHint("Video URL is optional when you pick a file below");
-            titleInput.post(() -> openPicker("video/*", REQUEST_PICK_VIDEO));
-            return;
-        }
-
-        mediaStatusView.setVisibility(View.GONE);
     }
 
     private void openPicker(String mimeType, int requestCode) {
@@ -94,60 +135,46 @@ public class BackendCreatePostActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK) {
-            return;
-        }
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
 
-        if ((requestCode == REQUEST_PICK_IMAGE || requestCode == REQUEST_PICK_VIDEO) && data != null && data.getData() != null) {
-            Uri selectedUri = data.getData();
-            if (selectedUri == null) {
-                return;
-            }
-
-            if (requestCode == REQUEST_PICK_IMAGE) {
-                Intent editorIntent = new Intent(this, ImageEditingActivity.class);
-                editorIntent.putExtra("uri", selectedUri.toString());
-                editorIntent.putExtra("return_result", true);
-                startActivityForResult(editorIntent, REQUEST_EDIT_IMAGE);
-            } else {
-                Intent editorIntent = new Intent(this, VideoEditActivity.class);
-                editorIntent.putExtra("uri", selectedUri.toString());
-                editorIntent.putExtra("return_result", true);
-                startActivityForResult(editorIntent, REQUEST_EDIT_VIDEO);
-            }
-            return;
-        }
-
-        if ((requestCode == REQUEST_EDIT_IMAGE || requestCode == REQUEST_EDIT_VIDEO) && data != null) {
+        Uri selectedUri = data.getData();
+        if (requestCode == REQUEST_PICK_IMAGE) {
+            Intent editorIntent = new Intent(this, ImageEditingActivity.class);
+            editorIntent.putExtra("uri", selectedUri.toString());
+            editorIntent.putExtra("return_result", true);
+            startActivityForResult(editorIntent, REQUEST_EDIT_IMAGE);
+        } else if (requestCode == REQUEST_PICK_VIDEO) {
+            Intent editorIntent = new Intent(this, VideoEditActivity.class);
+            editorIntent.putExtra("uri", selectedUri.toString());
+            editorIntent.putExtra("return_result", true);
+            startActivityForResult(editorIntent, REQUEST_EDIT_VIDEO);
+        } else if (requestCode == REQUEST_EDIT_IMAGE || requestCode == REQUEST_EDIT_VIDEO) {
             String editedUri = data.getStringExtra("edited_uri");
-            if (editedUri == null || editedUri.trim().isEmpty()) {
-                return;
-            }
-
-            pendingMediaUri = Uri.parse(editedUri);
-            pendingMediaType = requestCode == REQUEST_EDIT_VIDEO ? "video" : "image";
-            mediaStatusView.setVisibility(View.VISIBLE);
-            mediaStatusView.setText("Selected " + pendingMediaType + " ready for upload.");
-            if ("image".equals(pendingMediaType)) {
-                imageInput.setHint("Edited image will be uploaded when you publish.");
-            } else {
-                imageInput.setHint("Edited video will be uploaded when you publish.");
+            if (editedUri != null) {
+                pendingMediaUri = Uri.parse(editedUri);
+                pendingMediaType = requestCode == REQUEST_EDIT_VIDEO ? "video" : "image";
+                mediaPreviewContainer.setVisibility(View.VISIBLE);
+                if ("image".equals(pendingMediaType)) {
+                    imagePreview.setImageURI(pendingMediaUri);
+                } else {
+                    imagePreview.setImageResource(R.drawable.cover); // Fallback for video thumbnail
+                }
             }
         }
     }
 
+    private void clearMedia() {
+        pendingMediaUri = null;
+        pendingMediaType = "";
+        mediaPreviewContainer.setVisibility(View.GONE);
+    }
+
     private void submitPost() {
         String token = sessionManager.getToken();
-        if (token.trim().isEmpty()) {
-            finish();
-            return;
-        }
-
         String title = titleInput.getText().toString().trim();
         String content = contentInput.getText().toString().trim();
-        String imageUrl = imageInput.getText().toString().trim();
 
-        if (title.isEmpty() && content.isEmpty() && imageUrl.isEmpty() && pendingMediaUri == null) {
+        if (title.isEmpty() && content.isEmpty() && pendingMediaUri == null) {
             Toast.makeText(this, "Add text or media before posting.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -157,42 +184,32 @@ public class BackendCreatePostActivity extends AppCompatActivity {
             BackendAuthApi.uploadFile(this, token, pendingMediaUri, "upload", new BackendAuthApi.AuthCallback() {
                 @Override
                 public void onSuccess(JSONObject responseJson) {
-                    runOnUiThread(() -> {
-                        String uploadedUrl = responseJson.optString("url", "");
-                        if (uploadedUrl.isEmpty()) {
-                            progressBar.setVisibility(View.GONE);
-                            Toast.makeText(BackendCreatePostActivity.this, "Upload failed.", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        publishPost(token, title, content, uploadedUrl, pendingMediaType);
-                    });
+                    runOnUiThread(() -> publishPost(token, title, content, responseJson.optString("url", ""), pendingMediaType));
                 }
 
                 @Override
                 public void onError(String message) {
                     runOnUiThread(() -> {
                         progressBar.setVisibility(View.GONE);
-                        TextView statusView = findViewById(R.id.createPostStatus);
-                        statusView.setVisibility(View.VISIBLE);
-                        statusView.setText(message);
+                        Toast.makeText(BackendCreatePostActivity.this, message, Toast.LENGTH_SHORT).show();
                     });
                 }
             });
-            return;
+        } else {
+            publishPost(token, title, content, "", "custom");
         }
-
-        publishPost(token, title, content, imageUrl, imageUrl.isEmpty() ? "custom" : "image");
     }
 
     private void publishPost(String token, String title, String content, String mediaUrl, String mediaType) {
         JSONObject payload = new JSONObject();
         try {
-            String normalizedType = "video".equals(mediaType) ? "video" : mediaUrl.isEmpty() ? "custom" : "image";
-            payload.put("postType", normalizedType);
+            payload.put("postType", mediaType);
             payload.put("title", title);
             payload.put("content", content);
+            payload.put("feeling", selectedFeeling);
+            payload.put("location", selectedLocation);
             if (!mediaUrl.isEmpty()) {
-                if ("video".equals(normalizedType)) {
+                if ("video".equals(mediaType)) {
                     payload.put("attachmentUrl", mediaUrl);
                     payload.put("attachmentType", "video");
                 } else {
@@ -200,11 +217,7 @@ public class BackendCreatePostActivity extends AppCompatActivity {
                 }
             }
             payload.put("commentsOpen", true);
-            payload.put("activityFeed", true);
-            payload.put("myStory", false);
         } catch (JSONException e) {
-            progressBar.setVisibility(View.GONE);
-            Toast.makeText(this, "Could not prepare post.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -213,7 +226,7 @@ public class BackendCreatePostActivity extends AppCompatActivity {
             public void onSuccess(JSONObject responseJson) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(BackendCreatePostActivity.this, "Post published.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BackendCreatePostActivity.this, "Post published!", Toast.LENGTH_SHORT).show();
                     finish();
                 });
             }
@@ -222,9 +235,7 @@ public class BackendCreatePostActivity extends AppCompatActivity {
             public void onError(String message) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    TextView statusView = findViewById(R.id.createPostStatus);
-                    statusView.setVisibility(View.VISIBLE);
-                    statusView.setText(message);
+                    Toast.makeText(BackendCreatePostActivity.this, message, Toast.LENGTH_SHORT).show();
                 });
             }
         });

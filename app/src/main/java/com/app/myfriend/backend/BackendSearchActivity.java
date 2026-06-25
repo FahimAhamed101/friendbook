@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -30,6 +31,7 @@ public class BackendSearchActivity extends AppCompatActivity {
     private View progressBar;
     private TextView emptyView;
     private EditText searchInput;
+    private RecyclerView recyclerView;
     private String currentCategory = "people"; // Default category
 
     private TextView[] categories;
@@ -44,7 +46,7 @@ public class BackendSearchActivity extends AppCompatActivity {
         emptyView = findViewById(R.id.searchEmpty);
         searchInput = findViewById(R.id.searchInput);
 
-        RecyclerView recyclerView = findViewById(R.id.searchRecyclerView);
+        recyclerView = findViewById(R.id.searchRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         peopleAdapter = new BackendPeopleAdapter(new BackendPeopleAdapter.OnPersonClickListener() {
@@ -108,10 +110,14 @@ public class BackendSearchActivity extends AppCompatActivity {
     }
 
     private void updateCategoryUI() {
+        TypedValue typedValue = new TypedValue();
+        getTheme().resolveAttribute(R.attr.texttwocolor, typedValue, true);
+        int textColor = typedValue.data;
+
         for (TextView catView : categories) {
             catView.setBackgroundTintList(null);
             catView.setBackgroundResource(R.drawable.btn_round);
-            catView.setTextColor(ContextCompat.getColor(this, R.color.texttwocolor));
+            catView.setTextColor(textColor);
         }
 
         TextView active = null;
@@ -134,7 +140,7 @@ public class BackendSearchActivity extends AppCompatActivity {
         emptyView.setVisibility(View.GONE);
 
         if ("people".equals(currentCategory)) {
-            findViewById(R.id.searchRecyclerView).setAdapter(peopleAdapter);
+            recyclerView.setAdapter(peopleAdapter);
             BackendAuthApi.searchPeople(token, query, new BackendAuthApi.AuthCallback() {
                 @Override
                 public void onSuccess(JSONObject responseJson) {
@@ -170,7 +176,7 @@ public class BackendSearchActivity extends AppCompatActivity {
                 }
             });
         } else {
-            findViewById(R.id.searchRecyclerView).setAdapter(postAdapter);
+            recyclerView.setAdapter(postAdapter);
             // Search posts using same API but different category param if supported, or filter locally
             // For now, let's reuse getFeedPosts and pretend it supports filtering
             BackendAuthApi.getFeedPosts(token, new BackendAuthApi.AuthCallback() {

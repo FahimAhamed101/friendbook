@@ -6,6 +6,7 @@ public class BackendFeedPost {
 
     public final String id;
     public final String type;
+    public final String authorId;
     public final String authorName;
     public final String authorHandle;
     public final String authorImage;
@@ -36,6 +37,7 @@ public class BackendFeedPost {
     public BackendFeedPost(
             String id,
             String type,
+            String authorId,
             String authorName,
             String authorHandle,
             String authorImage,
@@ -65,6 +67,7 @@ public class BackendFeedPost {
     ) {
         this.id = id;
         this.type = type;
+        this.authorId = authorId;
         this.authorName = authorName;
         this.authorHandle = authorHandle;
         this.authorImage = authorImage;

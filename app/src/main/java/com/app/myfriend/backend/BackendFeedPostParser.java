@@ -58,6 +58,7 @@ public final class BackendFeedPostParser {
             items.add(new BackendFeedPost(
                     post.optString("id", ""),
                     post.optString("type", "custom"),
+                    post.optString("authorId", ""),
                     post.optString("authorName", "Unknown author"),
                     post.optString("authorHandle", ""),
                     post.optString("authorImage", ""),

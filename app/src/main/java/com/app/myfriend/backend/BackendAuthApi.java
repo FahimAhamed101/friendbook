@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
+import android.webkit.MimeTypeMap;
 
 import com.app.myfriend.BuildConfig;
 
@@ -76,6 +77,10 @@ public class BackendAuthApi {
         get("/posts/feed", token, callback);
     }
 
+    public static void getReels(String token, AuthCallback callback) {
+        get("/posts/feed?type=video", token, callback);
+    }
+
     public static void getSavedPosts(String token, AuthCallback callback) {
         get("/posts/saved", token, callback);
     }
@@ -95,6 +100,12 @@ public class BackendAuthApi {
         }
 
         String mimeType = context.getContentResolver().getType(fileUri);
+        if (mimeType == null || mimeType.trim().isEmpty()) {
+            String extension = MimeTypeMap.getFileExtensionFromUrl(fileUri.toString());
+            if (extension != null) {
+                mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            }
+        }
         if (mimeType == null || mimeType.trim().isEmpty()) {
             mimeType = "application/octet-stream";
         }
@@ -220,6 +231,15 @@ public class BackendAuthApi {
         int apiIndex = baseUrl.indexOf("/api");
         String origin = apiIndex >= 0 ? baseUrl.substring(0, apiIndex) : baseUrl;
         return origin + normalized;
+    }
+
+    public static String getVideoThumbnail(String videoUrl) {
+        if (videoUrl == null || videoUrl.isEmpty()) return "";
+        String resolved = resolveUrl(videoUrl);
+        if (resolved.contains("cloudinary.com") && resolved.contains("/video/upload/")) {
+            return resolved.replace("/video/upload/", "/video/upload/so_0/").replace(".mp4", ".jpg").replace(".mkv", ".jpg").replace(".mov", ".jpg");
+        }
+        return resolved;
     }
 
     private static void post(String path, JSONObject payload, AuthCallback callback) {

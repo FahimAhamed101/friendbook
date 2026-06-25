@@ -122,20 +122,24 @@ function normalizeBoolean(value, fallback) {
 async function getFeedPosts(req, res, next) {
   try {
     const now = new Date();
-    let posts = await Post.find({
+    const query = {
       activityFeed: true,
       $or: [{ scheduledFor: null }, { scheduledFor: { $lte: now } }],
-    })
+    };
+
+    if (req.query.type) {
+      query.postType = req.query.type;
+    }
+
+    let posts = await Post.find(query)
       .populate("author")
       .populate("comments.user")
       .sort({ createdAt: -1 })
       .limit(50);
 
-    if (posts.length === 0) {
+    if (posts.length === 0 && !req.query.type) {
       await ensureSeedFeedPostsForUser(req.user._id);
-      posts = await Post.find({
-        activityFeed: true,
-      })
+      posts = await Post.find(query)
         .populate("author")
         .populate("comments.user")
         .sort({ createdAt: -1 })

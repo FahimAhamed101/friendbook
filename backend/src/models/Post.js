@@ -119,6 +119,12 @@ const postSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    group: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      default: null,
+      index: true,
+    },
     postType: {
       type: String,
       enum: ["custom", "article", "premium", "image", "album", "link", "video", "gif", "audio", "sponsor", "party", "bg"],

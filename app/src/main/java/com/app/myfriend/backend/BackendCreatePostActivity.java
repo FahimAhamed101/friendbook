@@ -4,16 +4,17 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.app.myfriend.NightMode;
 import com.app.myfriend.R;
 import com.app.myfriend.reel.VideoEditActivity;
 import com.app.myfriend.send.ImageEditingActivity;
@@ -47,9 +48,13 @@ public class BackendCreatePostActivity extends AppCompatActivity {
     private String selectedFeeling = "";
     private String selectedLocation = "";
     private String initialPostType = "custom";
+    private boolean isPresetApplied = false;
+    private NightMode nightMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        nightMode = new NightMode(this);
+        applyTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_backend_create_post);
 
@@ -62,6 +67,10 @@ public class BackendCreatePostActivity extends AppCompatActivity {
         mediaPreviewContainer = findViewById(R.id.createPostMediaPreviewContainer);
         avatarView = findViewById(R.id.createPostAvatar);
         authorNameView = findViewById(R.id.createPostAuthorName);
+
+        if (savedInstanceState != null) {
+            isPresetApplied = savedInstanceState.getBoolean("isPresetApplied", false);
+        }
 
         initialPostType = String.valueOf(getIntent().getStringExtra("initial_post_type")).trim().toLowerCase();
         if (initialPostType.isEmpty() || "null".equals(initialPostType)) {
@@ -78,7 +87,27 @@ public class BackendCreatePostActivity extends AppCompatActivity {
         findViewById(R.id.createPostFeeling).setOnClickListener(v -> showFeelingDialog());
         findViewById(R.id.createPostLocationLabel).setOnClickListener(v -> showLocationDialog());
 
-        applyComposerPreset();
+        if (!isPresetApplied) {
+            applyComposerPreset();
+            isPresetApplied = true;
+        }
+    }
+
+    private void applyTheme() {
+        String state = nightMode.loadNightModeState();
+        if ("night".equalsIgnoreCase(state)) {
+            setTheme(R.style.DarkTheme);
+        } else if ("dim".equalsIgnoreCase(state)) {
+            setTheme(R.style.DimTheme);
+        } else {
+            setTheme(R.style.AppTheme);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("isPresetApplied", isPresetApplied);
     }
 
     private void setupUserHeader() {
@@ -135,27 +164,42 @@ public class BackendCreatePostActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        if (resultCode != RESULT_OK) {
+            if (requestCode == REQUEST_EDIT_IMAGE || requestCode == REQUEST_EDIT_VIDEO) {
+                Toast.makeText(this, "Editor cancelled", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
 
-        Uri selectedUri = data.getData();
-        if (requestCode == REQUEST_PICK_IMAGE) {
-            Intent editorIntent = new Intent(this, ImageEditingActivity.class);
-            editorIntent.putExtra("uri", selectedUri.toString());
-            editorIntent.putExtra("return_result", true);
-            startActivityForResult(editorIntent, REQUEST_EDIT_IMAGE);
-        } else if (requestCode == REQUEST_PICK_VIDEO) {
-            Intent editorIntent = new Intent(this, VideoEditActivity.class);
-            editorIntent.putExtra("uri", selectedUri.toString());
-            editorIntent.putExtra("return_result", true);
-            startActivityForResult(editorIntent, REQUEST_EDIT_VIDEO);
+        if (requestCode == REQUEST_PICK_IMAGE || requestCode == REQUEST_PICK_VIDEO) {
+            if (data == null) return;
+            Uri selectedUri = data.getData();
+            if (selectedUri == null) return;
+
+            if (requestCode == REQUEST_PICK_IMAGE) {
+                Intent editorIntent = new Intent(this, ImageEditingActivity.class);
+                editorIntent.setData(selectedUri);
+                editorIntent.putExtra("uri", selectedUri.toString());
+                editorIntent.putExtra("return_result", true);
+                editorIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivityForResult(editorIntent, REQUEST_EDIT_IMAGE);
+            } else {
+                Intent editorIntent = new Intent(this, VideoEditActivity.class);
+                editorIntent.setData(selectedUri);
+                editorIntent.putExtra("uri", selectedUri.toString());
+                editorIntent.putExtra("return_result", true);
+                editorIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivityForResult(editorIntent, REQUEST_EDIT_VIDEO);
+            }
         } else if (requestCode == REQUEST_EDIT_IMAGE || requestCode == REQUEST_EDIT_VIDEO) {
+            if (data == null) return;
             String editedUri = data.getStringExtra("edited_uri");
             if (editedUri != null) {
                 pendingMediaUri = Uri.parse(editedUri);
                 pendingMediaType = requestCode == REQUEST_EDIT_VIDEO ? "video" : "image";
                 mediaPreviewContainer.setVisibility(View.VISIBLE);
                 if ("image".equals(pendingMediaType)) {
-                    imagePreview.setImageURI(pendingMediaUri);
+                    Picasso.get().load(pendingMediaUri).into(imagePreview);
                 } else {
                     imagePreview.setImageResource(R.drawable.cover); // Fallback for video thumbnail
                 }
@@ -214,6 +258,8 @@ public class BackendCreatePostActivity extends AppCompatActivity {
                     payload.put("attachmentType", "video");
                 } else {
                     payload.put("displayImageUrl", mediaUrl);
+                    payload.put("attachmentUrl", mediaUrl);
+                    payload.put("attachmentType", "image");
                 }
             }
             payload.put("commentsOpen", true);

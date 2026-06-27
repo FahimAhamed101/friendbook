@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/layoutcolor">
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/createGroupProgressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="#1877F2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:trackColor="#FF7CB6FF"
+        app:trackThickness="2dp" />
+
+    <ImageView
+        android:id="@+id/createGroupBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/circle"
+        android:backgroundTint="?attr/backgroundcolor"
+        android:padding="5dp"
+        android:src="@drawable/ic_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="#596C84" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/bold"
+        android:text="Create New Group"
+        android:textColor="@color/colorPrimary"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="@+id/createGroupBack"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/createGroupBack" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/createGroupIconCard"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="32dp"
+        app:cardCornerRadius="50dp"
+        app:cardElevation="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createGroupBack">
+
+        <ImageView
+            android:id="@+id/createGroupIconPreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/group_icon" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#40000000" />
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:src="@drawable/add_photo"
+            app:tint="#FFFFFF" />
+    </androidx.cardview.widget.CardView>
+
+    <EditText
+        android:id="@+id/createGroupName"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/edittext_round"
+        android:backgroundTint="?attr/backgroundcolor"
+        android:fontFamily="@font/bold_roboto"
+        android:hint="Group Name"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="?attr/textcolor"
+        android:textColorHint="?attr/texttwocolor"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@+id/createGroupIconCard" />
+
+    <EditText
+        android:id="@+id/createGroupCategory"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/edittext_round"
+        android:backgroundTint="?attr/backgroundcolor"
+        android:fontFamily="@font/bold_roboto"
+        android:hint="Category (e.g. Sports, Gaming)"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="?attr/textcolor"
+        android:textColorHint="?attr/texttwocolor"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@+id/createGroupName" />
+
+    <EditText
+        android:id="@+id/createGroupDescription"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/edittext_round"
+        android:backgroundTint="?attr/backgroundcolor"
+        android:fontFamily="@font/bold_roboto"
+        android:gravity="top"
+        android:hint="What is this group about?"
+        android:padding="16dp"
+        android:textColor="?attr/textcolor"
+        android:textColorHint="?attr/texttwocolor"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@+id/createGroupCategory" />
+
+    <Button
+        android:id="@+id/createGroupSubmit"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/btn_round"
+        android:backgroundTint="@color/colorPrimary"
+        android:fontFamily="@font/bold_roboto"
+        android:text="Create Group"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

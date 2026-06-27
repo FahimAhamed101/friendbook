@@ -14,6 +14,7 @@ import com.app.myfriend.R;
 import com.app.myfriend.marketPlace.MarketPlaceActivity;
 import com.app.myfriend.meeting.MeetingActivity;
 import com.app.myfriend.watchParty.StartWatchPartyActivity;
+import com.app.myfriend.podcast.PodcastActivity;
 
 public class BackendMenuActivity extends AppCompatActivity {
 
@@ -32,10 +33,10 @@ public class BackendMenuActivity extends AppCompatActivity {
 
         findViewById(R.id.menuProfile).setOnClickListener(v -> startActivity(new Intent(this, BackendProfileActivity.class)));
         findViewById(R.id.menuMarketplace).setOnClickListener(v -> startActivity(new Intent(this, MarketPlaceActivity.class)));
-        findViewById(R.id.menuGroups).setOnClickListener(v -> startActivity(new Intent(this, BackendDiscoverActivity.class)));
+        findViewById(R.id.menuGroups).setOnClickListener(v -> startActivity(new Intent(this, BackendGroupsActivity.class)));
         findViewById(R.id.menuWatchParty).setOnClickListener(v -> startActivity(new Intent(this, StartWatchPartyActivity.class)));
         findViewById(R.id.menuMeetings).setOnClickListener(v -> startActivity(new Intent(this, MeetingActivity.class)));
-        findViewById(R.id.menuPodcast).setOnClickListener(v -> startActivity(new Intent(this, BackendNotificationsActivity.class)));
+        findViewById(R.id.menuPodcast).setOnClickListener(v -> startActivity(new Intent(this, PodcastActivity.class)));
         findViewById(R.id.menuSaved).setOnClickListener(v -> startActivity(new Intent(this, BackendSavedActivity.class)));
         findViewById(R.id.menuLive).setOnClickListener(v -> startActivity(new Intent(this, BackendCreatePostActivity.class)));
         findViewById(R.id.menuLogout).setOnClickListener(v -> {

@@ -9,11 +9,13 @@
 
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/createPostProgressBar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:indeterminate="true"
         android:visibility="gone"
         app:indicatorColor="#1877F2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:trackColor="#FF7CB6FF"
         app:trackCornerRadius="2dp"
@@ -37,7 +39,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/bold"
-        android:text="Create Post (Backend)"
+        android:text="Create Post"
         android:textColor="@color/colorPrimary"
         android:textSize="22sp"
         app:layout_constraintBottom_toBottomOf="@+id/createPostBack"
@@ -110,7 +112,7 @@
 
     <EditText
         android:id="@+id/createPostTitle"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
@@ -120,11 +122,13 @@
         android:hint="Add a catchy title..."
         android:textColor="?attr/textcolor"
         android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/createPostAvatar" />
 
     <com.hendraanggrian.appcompat.widget.SocialEditText
         android:id="@+id/createPostContent"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
@@ -137,18 +141,22 @@
         android:textColorHint="?attr/texttwocolor"
         android:textSize="15sp"
         app:hashtagColor="@color/colorPrimary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/createPostTitle"
         app:mentionColor="@color/colorPrimary"
         app:socialFlags="hashtag|mention" />
 
     <RelativeLayout
         android:id="@+id/createPostMediaPreviewContainer"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_width="0dp"
+        android:layout_height="250dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/createPostContent">
 
         <ImageView
@@ -237,27 +245,17 @@
 
     <TextView
         android:id="@+id/createPostStatus"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
         android:textColor="#F44336"
         android:textSize="12sp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/createPostTools"
+        app:layout_constraintEnd_toStartOf="@+id/createPostSubmit"
         app:layout_constraintStart_toStartOf="parent"
         tools:text="Error message here" />
-
-    <!-- Extra fields for logic but hidden in this layout -->
-    <EditText
-        android:id="@+id/createPostImageUrl"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone" />
-    <TextView
-        android:id="@+id/createPostMediaStatus"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

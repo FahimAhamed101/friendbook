@@ -1,5 +1,6 @@
 package com.app.myfriend.backend;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -99,13 +100,22 @@ public class BackendAuthApi {
             return;
         }
 
-        String mimeType = context.getContentResolver().getType(fileUri);
-        if (mimeType == null || mimeType.trim().isEmpty()) {
+        String mimeType = null;
+        if (ContentResolver.SCHEME_CONTENT.equals(fileUri.getScheme())) {
+            mimeType = context.getContentResolver().getType(fileUri);
+        } else {
             String extension = MimeTypeMap.getFileExtensionFromUrl(fileUri.toString());
+            if (extension == null || extension.isEmpty()) {
+                String path = fileUri.getPath();
+                if (path != null && path.contains(".")) {
+                    extension = path.substring(path.lastIndexOf(".") + 1);
+                }
+            }
             if (extension != null) {
-                mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+                mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
             }
         }
+
         if (mimeType == null || mimeType.trim().isEmpty()) {
             mimeType = "application/octet-stream";
         }
@@ -114,7 +124,7 @@ public class BackendAuthApi {
         try {
             fileBytes = readBytes(context, fileUri);
         } catch (IOException e) {
-            callback.onError("Could not read the selected file.");
+            callback.onError("Could not read the selected file: " + e.getMessage());
             return;
         }
 
@@ -211,6 +221,27 @@ public class BackendAuthApi {
     public static void markConversationRead(String token, String conversationId, AuthCallback callback) {
         JSONObject payload = new JSONObject();
         post("/chat/conversations/" + conversationId + "/read", token, payload, callback);
+    }
+
+    // Groups API
+    public static void createGroup(String token, JSONObject payload, AuthCallback callback) {
+        post("/groups", token, payload, callback);
+    }
+
+    public static void getMyGroups(String token, AuthCallback callback) {
+        get("/groups/me", token, callback);
+    }
+
+    public static void getDiscoverGroups(String token, AuthCallback callback) {
+        get("/groups/discover", token, callback);
+    }
+
+    public static void getGroupPosts(String token, AuthCallback callback) {
+        get("/groups/posts", token, callback);
+    }
+
+    public static void joinGroup(String token, String groupId, AuthCallback callback) {
+        post("/groups/" + groupId + "/join", token, new JSONObject(), callback);
     }
 
     public static String resolveUrl(String rawUrl) {
@@ -317,7 +348,7 @@ public class BackendAuthApi {
             return;
         }
 
-        RequestBody fileBody = RequestBody.create(fileBytes, MediaType.get(mimeType));
+        RequestBody fileBody = RequestBody.create(fileBytes, MediaType.parse(mimeType));
         MultipartBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("kind", kind == null || kind.trim().isEmpty() ? "upload" : kind.trim())
@@ -350,23 +381,28 @@ public class BackendAuthApi {
     }
 
     private static String getFileName(Context context, Uri fileUri) {
-        Cursor cursor = context.getContentResolver().query(fileUri, null, null, null, null);
-        if (cursor != null) {
-            try {
-                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                if (index >= 0 && cursor.moveToFirst()) {
-                    String name = cursor.getString(index);
-                    if (name != null && !name.trim().isEmpty()) {
-                        return name.trim();
+        if (ContentResolver.SCHEME_CONTENT.equals(fileUri.getScheme())) {
+            Cursor cursor = context.getContentResolver().query(fileUri, null, null, null, null);
+            if (cursor != null) {
+                try {
+                    int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (index >= 0 && cursor.moveToFirst()) {
+                        String name = cursor.getString(index);
+                        if (name != null && !name.trim().isEmpty()) {
+                            return name.trim();
+                        }
                     }
+                } finally {
+                    cursor.close();
                 }
-            } finally {
-                cursor.close();
             }
         }
 
         String fallback = fileUri.getLastPathSegment();
-        return fallback == null || fallback.trim().isEmpty() ? "upload" : fallback.trim();
+        if (fallback == null || fallback.trim().isEmpty()) {
+            return "upload_" + System.currentTimeMillis();
+        }
+        return fallback.trim();
     }
 
     private static List<String> getBaseUrls() {

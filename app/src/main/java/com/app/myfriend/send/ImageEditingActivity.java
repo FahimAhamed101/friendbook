@@ -1,14 +1,17 @@
 package com.app.myfriend.send;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
+import com.app.myfriend.R;
 import com.app.myfriend.menu.MenuActivity;
 import com.app.myfriend.story.AddStoryActivity;
 
@@ -25,7 +28,7 @@ import ly.img.android.pesdk.backend.model.EditorSDKResult;
 import ly.img.android.pesdk.backend.model.state.LoadSettings;
 import ly.img.android.pesdk.backend.model.state.PhotoEditorSaveSettings;
 import ly.img.android.pesdk.backend.model.state.manager.SettingsList;
-import ly.img.android.pesdk.ui.activity.EditorBuilder;
+import ly.img.android.pesdk.ui.activity.PhotoEditorBuilder;
 import ly.img.android.pesdk.ui.model.state.UiConfigFilter;
 import ly.img.android.pesdk.ui.model.state.UiConfigFrame;
 import ly.img.android.pesdk.ui.model.state.UiConfigOverlay;
@@ -34,10 +37,11 @@ import ly.img.android.pesdk.ui.model.state.UiConfigText;
 import ly.img.android.pesdk.ui.utils.PermissionRequest;
 import ly.img.android.serializer._3.IMGLYFileWriter;
 
-@SuppressWarnings("ALL")
-public class ImageEditingActivity extends Activity implements PermissionRequest.Response {
+public class ImageEditingActivity extends AppCompatActivity implements PermissionRequest.Response {
 
-    // Important permission request for Android 6.0 and above, don't forget to add this!
+    private static final String TAG = "ImageEditingActivity";
+    public static final int PESDK_RESULT = 1;
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         PermissionRequest.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -49,19 +53,12 @@ public class ImageEditingActivity extends Activity implements PermissionRequest.
 
     @Override
     public void permissionDenied() {
-
+        Toast.makeText(this, "Permissions are required to edit images", Toast.LENGTH_SHORT).show();
+        finish();
     }
 
-    public static final int PESDK_RESULT = 1;
-
-    private SettingsList createPesdkSettingsList() {
-
-        // Create a empty new SettingsList and apply the changes on this referance.
+    private PhotoEditorSettingsList createPesdkSettingsList() {
         PhotoEditorSettingsList settingsList = new PhotoEditorSettingsList();
-
-        // If you include our asset Packs and you use our UI you also need to add them to the UI,
-        // otherwise they are only available for the backend
-        // See the specific feature sections of our guides if you want to know how to add our own Assets.
 
         settingsList.getSettingsModel(UiConfigFilter.class).setFilterList(
                 FilterPackBasic.getFilterPack()
@@ -91,20 +88,30 @@ public class ImageEditingActivity extends Activity implements PermissionRequest.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String selectedImage = getIntent().getStringExtra("uri");
-        openEditor(Uri.parse(selectedImage));
+        Uri uri = getIntent().getData();
+        if (uri == null) {
+            String uriString = getIntent().getStringExtra("uri");
+            if (uriString != null) {
+                uri = Uri.parse(uriString);
+            }
+        }
 
+        if (uri != null) {
+            openEditor(uri);
+        } else {
+            Log.e(TAG, "No image URI provided");
+            Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     private void openEditor(Uri inputImage) {
-        SettingsList settingsList = createPesdkSettingsList();
+        PhotoEditorSettingsList settingsList = createPesdkSettingsList();
 
-        // Set input image
         settingsList.getSettingsModel(LoadSettings.class).setSource(inputImage);
-
         settingsList.getSettingsModel(PhotoEditorSaveSettings.class).setOutputToGallery(Environment.DIRECTORY_DCIM);
 
-        new EditorBuilder(this)
+        new PhotoEditorBuilder(this)
                 .setSettingsList(settingsList)
                 .startActivityForResult(this, PESDK_RESULT);
     }
@@ -113,10 +120,7 @@ public class ImageEditingActivity extends Activity implements PermissionRequest.
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         if (resultCode == RESULT_OK && requestCode == PESDK_RESULT) {
-            // Editor has saved an Image.
             EditorSDKResult data = new EditorSDKResult(intent);
-
-            // This adds the result and source image to Android's gallery
             data.notifyGallery(EditorSDKResult.UPDATE_RESULT & EditorSDKResult.UPDATE_SOURCE);
 
             Toast.makeText(this, "Image Saved", Toast.LENGTH_SHORT).show();
@@ -128,32 +132,32 @@ public class ImageEditingActivity extends Activity implements PermissionRequest.
                 setResult(RESULT_OK, resultIntent);
                 finish();
             } else if (getIntent().hasExtra("type")){
-                Intent i =   new Intent(ImageEditingActivity.this, AddStoryActivity.class);
+                Intent i = new Intent(this, AddStoryActivity.class);
                 i.putExtra("type", "image");
                 i.putExtra("uri", data.getResultUri().toString());
                 startActivity(i);
                 finish();
-            }else {
-                Intent i =   new Intent(ImageEditingActivity.this, MenuActivity.class);
+            } else {
+                Intent i = new Intent(this, MenuActivity.class);
                 startActivity(i);
                 finish();
             }
 
-            // OPTIONAL: read the latest state to save it as a serialisation
             SettingsList lastState = data.getSettingsList();
-            new IMGLYFileWriter(lastState).writeJson(new File(
-                    Environment.getExternalStorageDirectory(),
-                    "serialisationReadyToReadWithPESDKFileReader.json"
-            ));
+            try {
+                new IMGLYFileWriter(lastState).writeJson(new File(
+                        getExternalFilesDir(null),
+                        "serialisation.json"
+                ));
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to write serialisation", e);
+            }
 
         } else if (resultCode == RESULT_CANCELED && requestCode == PESDK_RESULT) {
             if (getIntent().getBooleanExtra("return_result", false)) {
                 setResult(RESULT_CANCELED);
-                finish();
-            } else {
-                onBackPressed();
             }
-
+            finish();
         }
     }
 }

@@ -5,6 +5,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const postRoutes = require("./routes/postRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const groupRoutes = require("./routes/groupRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 function getAllowedOrigins() {
@@ -89,6 +90,7 @@ apiRouter.use("/chat", chatRoutes);
 apiRouter.use("/posts", postRoutes);
 apiRouter.use("/profile", profileRoutes);
 apiRouter.use("/uploads", uploadRoutes);
+apiRouter.use("/groups", groupRoutes);
 
 // The route modules above remain the source of truth for every backend endpoint.
 // Vercel forwards /api/* into this app through a single catch-all function, while
